@@ -7,7 +7,8 @@ body {
   margin: 0;
   display: flex;
   justify-content: center;
-  align-items: center; /* Center horizontally/vertically for widget view */
+  align-items: flex-start;
+  padding-top: 20px;
   height: 100vh;
   background: transparent !important;
   user-select: none;
@@ -26,25 +27,54 @@ kbd {
   color: #ccc;
 }
 
+/* ─── Layout ─── */
 .app-wrapper {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center the pill and panel */
+  align-items: center;
   gap: 12px;
   width: 90vw;
   max-width: 700px;
 }
 
-/* Let tauri handle dragging */
+/* ─── Tauri Drag ─── */
 [data-tauri-drag-region] {
   cursor: grab;
 }
-
 [data-tauri-drag-region]:active {
   cursor: grabbing;
 }
 
-/* Top Bar Container */
+/* ─── Toast ─── */
+.toast {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(36, 36, 42, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-size: 12px;
+  color: #ddd;
+  z-index: 9999;
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 2.2s forwards;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes toastOut {
+  from { opacity: 1; }
+  to { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}
+
+/* ─── Top Bar ─── */
 .top-bar-container {
   display: flex;
   align-items: center;
@@ -60,7 +90,7 @@ kbd {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 30px;
   padding: 8px 16px;
-  gap: 14px;
+  gap: 10px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
@@ -80,12 +110,13 @@ kbd {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
   transition: all 0.2s;
 }
-
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+  background: rgba(255, 80, 80, 0.25);
+  color: #ff6b6b;
+  border-color: rgba(255, 80, 80, 0.3);
 }
 
+/* ─── Icon Buttons ─── */
 .icon-btn {
   display: flex;
   align-items: center;
@@ -98,12 +129,62 @@ kbd {
   border-radius: 50%;
   transition: color 0.2s, background 0.2s;
 }
-
 .icon-btn:hover {
   color: #fff;
   background: rgba(255, 255, 255, 0.08);
 }
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.icon-btn.paused-btn {
+  color: #fbbf24;
+}
+.icon-btn.stopped-btn {
+  color: #888;
+}
 
+/* ─── Recording Indicator ─── */
+.rec-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.rec-indicator.paused {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.25);
+}
+.rec-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: recPulse 1s infinite;
+}
+.rec-indicator.paused .rec-dot {
+  background: #fbbf24;
+  animation: none;
+}
+.rec-text {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #ef4444;
+}
+.rec-indicator.paused .rec-text {
+  color: #fbbf24;
+}
+
+@keyframes recPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.7); }
+}
+
+/* ─── Playback Controls ─── */
 .playback-controls {
   display: flex;
   align-items: center;
@@ -125,7 +206,15 @@ kbd {
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* Main Panel */
+/* ─── Drag Button ─── */
+.drag-btn {
+  cursor: grab !important;
+}
+.drag-btn:active {
+  cursor: grabbing !important;
+}
+
+/* ─── Main Panel ─── */
 .main-panel {
   width: 100%;
   background: rgba(36, 36, 42, 0.95);
@@ -137,25 +226,37 @@ kbd {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.3s ease;
+  max-height: 600px;
+  overflow: hidden;
+}
+.main-panel.collapsed {
+  max-height: 0;
+  padding: 0 24px;
+  opacity: 0;
+  border: none;
+  box-shadow: none;
+  gap: 0;
+  pointer-events: none;
 }
 
+/* ─── Panel Header ─── */
 .panel-header {
   display: flex;
   align-items: center;
   gap: 18px;
 }
-
 .home-btn {
   color: #cfcfcf;
   padding: 6px;
 }
 
+/* ─── Tabs ─── */
 .tabs {
   display: flex;
   gap: 6px;
 }
-
 .tab {
   background: transparent;
   border: none;
@@ -167,24 +268,22 @@ kbd {
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .tab:hover {
   color: #ddd;
 }
-
 .tab.active {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
 }
 
+/* ─── Action Buttons ─── */
 .actions-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 4px 0 12px 0;
+  padding: 4px 0 8px 0;
 }
-
 .action-btn {
   display: flex;
   align-items: center;
@@ -192,23 +291,223 @@ kbd {
   background: transparent;
   border: none;
   color: #ddd;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  padding: 6px 4px;
+  padding: 5px 4px;
   border-radius: 6px;
   transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
 }
-
-.action-btn:hover {
+.action-btn:hover:not(:disabled) {
   color: #fff;
+  background: rgba(255, 255, 255, 0.06);
 }
-
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .dot {
-  color: #666;
+  color: #555;
   font-size: 14px;
 }
 
+/* ─── Content Area ─── */
+.content-area {
+  flex: 1;
+  min-height: 140px;
+  max-height: 260px;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 4px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+.content-area::-webkit-scrollbar {
+  width: 4px;
+}
+.content-area::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+
+/* ─── Chat Messages ─── */
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 8px;
+}
+
+.message {
+  display: flex;
+  max-width: 88%;
+  animation: msgFadeIn 0.3s ease;
+}
+.message-user {
+  align-self: flex-end;
+  justify-content: flex-end;
+}
+.message-ai, .message-system {
+  align-self: flex-start;
+}
+
+@keyframes msgFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-bubble {
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.message-user .message-bubble {
+  background: #0B57D0;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.message-ai .message-bubble {
+  background: rgba(255, 255, 255, 0.07);
+  color: #e0e0e0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom-left-radius: 4px;
+}
+
+.message-system .message-bubble {
+  background: rgba(255, 255, 255, 0.04);
+  color: #aaa;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  font-size: 12px;
+  text-align: center;
+  max-width: 100%;
+}
+
+.message-text {
+  white-space: pre-wrap;
+}
+
+.message-time {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 4px;
+  text-align: right;
+}
+.message-ai .message-time,
+.message-system .message-time {
+  text-align: left;
+}
+
+/* ─── Typing Indicator ─── */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 4px 2px;
+  align-items: center;
+}
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #999;
+  animation: typingBounce 1.2s infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ─── Transcript / Minutes ─── */
+.transcript-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 8px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  color: #777;
+  text-align: center;
+  gap: 8px;
+}
+.empty-icon {
+  font-size: 28px;
+}
+.empty-state p {
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+.minute-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  transition: background 0.2s;
+  animation: msgFadeIn 0.25s ease;
+}
+.minute-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.minute-content {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.minute-time {
+  font-size: 10px;
+  color: #0B57D0;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  padding-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.minute-text {
+  font-size: 13px;
+  color: #ddd;
+  line-height: 1.5;
+}
+
+.minute-delete {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.minute-delete:hover {
+  color: #ff6b6b;
+  background: rgba(255, 80, 80, 0.12);
+}
+
+/* ─── Input ─── */
 .input-container {
   display: flex;
   align-items: center;
@@ -219,7 +518,6 @@ kbd {
   position: relative;
   transition: border-color 0.2s, background 0.2s;
 }
-
 .input-container:focus-within {
   border-color: rgba(255, 255, 255, 0.25);
   background: rgba(255, 255, 255, 0.05);
@@ -240,8 +538,9 @@ kbd {
   bottom: 0;
   display: flex;
   align-items: center;
-  color: #999;
-  font-size: 15px;
+  gap: 6px;
+  color: #888;
+  font-size: 14px;
   pointer-events: none;
   white-space: nowrap;
 }
@@ -268,10 +567,15 @@ input {
   color: #fff;
   cursor: pointer;
   margin-left: 10px;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s, opacity 0.2s;
   box-shadow: 0 2px 8px rgba(11, 87, 208, 0.4);
+  flex-shrink: 0;
 }
-
-.send-btn:hover {
+.send-btn:hover:not(:disabled) {
   background: #0842a0;
+  transform: scale(1.05);
+}
+.send-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
