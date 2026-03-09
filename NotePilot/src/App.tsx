@@ -16,6 +16,7 @@ import {
   type TranscriptSegment,
   type AudioStatus,
 } from "./audioService";
+import { downloadMeetingPDF } from "./pdfService";
 import "./App.css";
 
 // ─── SVG Icons ───
@@ -93,6 +94,15 @@ const Trash = () => (
     <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
   </svg>
 );
+// NEW: Download PDF icon
+const DownloadPdf = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="12" y1="12" x2="12" y2="18" />
+    <polyline points="9 15 12 18 15 15" />
+  </svg>
+);
 
 function App() {
   // ─── Core State ───
@@ -125,6 +135,9 @@ function App() {
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
+  // PDF export state
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
+
   // Panel resize
   const [panelHeight, setPanelHeight] = useState<number | null>(null);
 
@@ -153,18 +166,15 @@ function App() {
 
     recorder.onTranscript = (segment: TranscriptSegment) => {
       setTranscriptSegments((prev) => {
-        // If this id already exists, replace it (interim update)
         const exists = prev.findIndex((s) => s.id === segment.id);
         if (exists !== -1) {
           const updated = [...prev];
           updated[exists] = segment;
           return updated;
         }
-        // New segment
         return [...prev, segment];
       });
 
-      // If it's a final result, also auto-add to minutes
       if (segment.isFinal && segment.text.trim().length > 3) {
         setMinutes((prev) => [
           ...prev,
@@ -243,7 +253,7 @@ function App() {
       return;
     }
     await recorderRef.current?.start();
-    setActiveTab("transcript"); // Switch to transcript tab when recording starts
+    setActiveTab("transcript");
   };
 
   const handleTogglePause = () => {
@@ -301,6 +311,27 @@ function App() {
   const clearTranscript = () => {
     setTranscriptSegments([]);
     showToast("🗑️ Transcript cleared");
+  };
+
+  // ─── PDF Export ───
+  const handleDownloadPDF = async () => {
+    if (isPdfExporting) return;
+    const hasContent = minutes.length > 0 || messages.filter((m) => m.role !== "system").length > 0;
+    if (!hasContent) {
+      showToast("📄 No meeting content to export yet");
+      return;
+    }
+    setIsPdfExporting(true);
+    showToast("📄 Generating PDF...");
+    try {
+      await downloadMeetingPDF(messages, minutes);
+      showToast("✅ PDF downloaded!");
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      showToast("❌ PDF export failed — check console");
+    } finally {
+      setIsPdfExporting(false);
+    }
   };
 
   // ─── AI Interaction ───
@@ -384,9 +415,10 @@ function App() {
   const isPaused = audioStatus === "paused";
   const isListening = audioStatus === "listening";
 
-  // Combine live transcript + manual minutes for the transcript tab
-  // Show live (interim) segments separately at the top of transcript tab
   const liveSegments = transcriptSegments.filter((s) => !s.isFinal);
+
+  const hasMeetingContent =
+    minutes.length > 0 || messages.filter((m) => m.role !== "system").length > 0;
 
   return (
     <div className="app-wrapper">
@@ -405,7 +437,6 @@ function App() {
           </button>
 
           <div className="playback-controls">
-            {/* Mic / Start button — only shown when not recording */}
             {!isRecording && (
               <button
                 className="icon-btn mic-start-btn"
@@ -417,7 +448,6 @@ function App() {
               </button>
             )}
 
-            {/* Pause/Resume — only shown while recording */}
             {isRecording && (
               <button
                 className={`icon-btn ${isPaused ? "paused-btn" : ""}`}
@@ -430,7 +460,6 @@ function App() {
 
             {isRecording && <div className="divider-sm"></div>}
 
-            {/* Stop — only shown while recording */}
             {isRecording && (
               <button
                 className="icon-btn"
@@ -460,6 +489,20 @@ function App() {
               <span className="rec-text">MIC...</span>
             </div>
           )}
+
+          {/* ─── PDF Export Button ─── */}
+          <button
+            className={`icon-btn pdf-export-btn ${!hasMeetingContent ? "pdf-export-btn--disabled" : ""} ${isPdfExporting ? "pdf-export-btn--loading" : ""}`}
+            onClick={handleDownloadPDF}
+            title={hasMeetingContent ? "Download meeting PDF" : "No meeting content yet"}
+            disabled={isPdfExporting}
+          >
+            {isPdfExporting ? (
+              <span className="pdf-spinner" />
+            ) : (
+              <DownloadPdf />
+            )}
+          </button>
 
           <button className="icon-btn" onClick={handleCollapse} title={isCollapsed ? "Expand" : "Collapse"}>
             {isCollapsed ? <ChevronDown /> : <ChevronUp />}
@@ -505,7 +548,6 @@ function App() {
               )}
             </button>
           </div>
-          {/* Clear transcript button */}
           {activeTab === "transcript" && (transcriptSegments.length > 0 || minutes.length > 0) && (
             <button
               className="icon-btn"
@@ -535,6 +577,16 @@ function App() {
           <button className="action-btn" onClick={() => handleActionButton("recap", "Recap")} disabled={isAiLoading}>
             ↻ Recap
           </button>
+          <span className="dot">•</span>
+          {/* PDF button also in action row for discoverability */}
+          <button
+            className={`action-btn pdf-action-btn ${isPdfExporting ? "pdf-action-btn--loading" : ""}`}
+            onClick={handleDownloadPDF}
+            disabled={isPdfExporting || !hasMeetingContent}
+            title="Download meeting report as PDF"
+          >
+            {isPdfExporting ? "⏳ Exporting…" : "📄 Export PDF"}
+          </button>
         </div>
 
         {/* CONTENT AREA */}
@@ -562,7 +614,6 @@ function App() {
             </div>
           ) : (
             <div className="transcript-list">
-              {/* Live interim text (what's being spoken right now) */}
               {liveSegments.length > 0 && (
                 <div className="live-transcript-banner">
                   <span className="live-dot"></span>
@@ -572,7 +623,6 @@ function App() {
                 </div>
               )}
 
-              {/* Final minutes */}
               {minutes.length === 0 && liveSegments.length === 0 ? (
                 <div className="empty-state">
                   <span className="empty-icon">🎤</span>

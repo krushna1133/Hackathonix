@@ -675,6 +675,55 @@ input {
   margin-top: 4px;
   animation: recPulse 1s infinite;
 }
+/* ─── ADD TO BOTTOM OF App.css ─── */
+
+/* PDF Export button in top pill */
+.pdf-export-btn {
+  color: #f87171 !important;
+  transition: color 0.2s, background 0.2s, transform 0.15s !important;
+}
+.pdf-export-btn:hover:not(:disabled) {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  transform: scale(1.08);
+}
+.pdf-export-btn--disabled {
+  color: #444 !important;
+  opacity: 0.4;
+}
+.pdf-export-btn--loading {
+  opacity: 0.6;
+  cursor: wait !important;
+}
+
+/* Spinner inside PDF button */
+.pdf-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(248, 113, 113, 0.3);
+  border-top-color: #f87171;
+  border-radius: 50%;
+  animation: pdfSpin 0.7s linear infinite;
+}
+@keyframes pdfSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* PDF action button in the actions row */
+.pdf-action-btn {
+  color: #f87171 !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em;
+}
+.pdf-action-btn:hover:not(:disabled) {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+.pdf-action-btn--loading {
+  color: #888 !important;
+  cursor: wait !important;
+}
 
 .live-text {
   font-size: 12.5px;

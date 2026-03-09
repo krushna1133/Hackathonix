@@ -4,7 +4,7 @@
 // ⚠️ Replace with your API key from https://aistudio.google.com
 const GEMINI_API_KEY = "AIzaSyApVoaskuxLXK7QJg5D3ONjUfdkAX23Gk8";
 
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models//gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const SYSTEM_PROMPT = `You are NotePilot, an intelligent AI meeting assistant embedded in a floating desktop widget. Your role is to help users during their meetings by:
 - Taking and organizing meeting minutes
