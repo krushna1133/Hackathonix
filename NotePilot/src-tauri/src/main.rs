@@ -30,7 +30,7 @@ fn main() {
                         // 2. Force window to stay topmost regardless of focus
                         let _ = SetWindowPos(
                             HWND(hwnd.0 as _),
-                            HWND_TOPMOST,
+                            Some(HWND_TOPMOST),
                             0, 0, 0, 0,
                             SWP_NOMOVE | SWP_NOSIZE
                         );
