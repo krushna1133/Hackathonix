@@ -104,15 +104,23 @@ function App() {
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
 
+  // Panel resize
+  const [panelHeight, setPanelHeight] = useState<number | null>(null);
+
   // Refs
   const chatEndRef = useRef<HTMLDivElement>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const appRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // ─── Drag State (browser fallback) ───
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
+
+  // ─── Resize State ───
+  const isResizing = useRef(false);
+  const resizeStart = useRef({ y: 0, height: 0 });
 
   // ─── Toast Helper ───
   const showToast = useCallback((msg: string) => {
@@ -151,17 +159,30 @@ function App() {
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !appRef.current) return;
-      const x = e.clientX - dragOffset.current.x;
-      const y = e.clientY - dragOffset.current.y;
-      appRef.current.style.position = "fixed";
-      appRef.current.style.left = `${x}px`;
-      appRef.current.style.top = `${y}px`;
-      appRef.current.style.transform = "none";
+      // Handle drag
+      if (isDragging.current && appRef.current) {
+        const x = e.clientX - dragOffset.current.x;
+        const y = e.clientY - dragOffset.current.y;
+        appRef.current.style.position = "fixed";
+        appRef.current.style.left = `${x}px`;
+        appRef.current.style.top = `${y}px`;
+        appRef.current.style.transform = "none";
+      }
+      // Handle resize
+      if (isResizing.current) {
+        const delta = e.clientY - resizeStart.current.y;
+        const newHeight = Math.max(120, Math.min(800, resizeStart.current.height + delta));
+        setPanelHeight(newHeight);
+      }
     };
     const handleMouseUp = () => {
       if (isDragging.current) {
         isDragging.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+      if (isResizing.current) {
+        isResizing.current = false;
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
       }
@@ -172,6 +193,16 @@ function App() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
+  }, []);
+
+  // ─── Resize Handler ───
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    const currentHeight = panelRef.current?.getBoundingClientRect().height || 400;
+    resizeStart.current = { y: e.clientY, height: currentHeight };
+    document.body.style.cursor = "ns-resize";
+    document.body.style.userSelect = "none";
   }, []);
 
   // ─── Button Handlers ───
@@ -397,7 +428,11 @@ function App() {
       </div>
 
       {/* MAIN PANEL */}
-      <div className={`main-panel ${isCollapsed ? "collapsed" : ""}`}>
+      <div
+        ref={panelRef}
+        className={`main-panel ${isCollapsed ? "collapsed" : ""}`}
+        style={panelHeight && !isCollapsed ? { height: `${panelHeight}px`, flex: 'none' } : undefined}
+      >
         <div className="panel-header">
           <button className="icon-btn home-btn" onClick={handleHome} title="Home">
             <Home />
@@ -517,6 +552,11 @@ function App() {
           <button className="send-btn" onClick={handleSend} disabled={!inputText.trim() || isAiLoading}>
             <Send />
           </button>
+        </div>
+
+        {/* RESIZE HANDLE */}
+        <div className="resize-handle" onMouseDown={handleResizeStart} title="Drag to resize">
+          <div className="resize-bar"></div>
         </div>
       </div>
     </div>
