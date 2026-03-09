@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NotePilot — Invisible AI Meeting Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Instrument+Serif:ital@0;1&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            --accent: #ffffff;
+            --accent2: #aaaaaa;
+            --accent3: #cccccc;
+            --text: #f0f0f0;
+            --muted: #555555;
+            --danger: #888888;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* Custom cursor */
+        .cursor {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s, opacity 0.3s;
+            mix-blend-mode: screen;
+        }
+
+        .cursor-ring {
+            position: fixed;
+            width: 36px;
+            height: 36px;
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: transform 0.18s ease, width 0.2s, height 0.2s, opacity 0.3s;
+        }
+
+        /* Noise overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.6;
+        }
+
+        /* Grid background */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* NAV */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 500;
+            padding: 0 40px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(7, 10, 15, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-logo .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.7);
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .nav-cta {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 20px;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            cursor: none;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .nav-cta:hover {
+            background: var(--accent);
+            color: var(--bg);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+        }
+
+        /* HERO */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 40px 80px;
+            z-index: 1;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .hero-glow2 {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(180, 180, 180, 0.04) 0%, transparent 70%);
+            top: 30%;
+            left: 20%;
+            pointer-events: none;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.04);
+            padding: 6px 16px;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 32px;
+            animation: fadeUp 0.6s ease both;
+        }
+
+        .badge-blink {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: blink 1.2s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(52px, 8vw, 108px);
+            font-weight: 800;
+            line-height: 0.92;
+            letter-spacing: -3px;
+            margin-bottom: 28px;
+            animation: fadeUp 0.8s 0.1s ease both;
+        }
+
+        h1 em {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-weight: 400;
+            color: var(--accent);
+        }
+
+        .hero-sub {
+            max-width: 540px;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.8;
+            margin-bottom: 48px;
+            animation: fadeUp 0.8s 0.2s ease both;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            animation: fadeUp 0.8s 0.3s ease both;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            padding: 14px 32px;
+            font-family: 'Syne', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: none;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+
+        .btn-primary:hover::after {
+            transform: translateX(100%);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 14px 32px;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            cursor: none;
+            transition: all 0.2s;
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--muted);
+            color: var(--text);
+        }
+
+        /* FLOATING MOCK UI */
+        .hero-mockup {
+            position: relative;
+            margin-top: 80px;
+            width: 100%;
+            max-width: 700px;
+            animation: fadeUp 0.8s 0.5s ease both;
+        }
+
+        .mockup-frame {
+            background: rgba(13, 17, 23, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            backdrop-filter: blur(40px);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .mockup-bar {
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mockup-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .mockup-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .mockup-dots span:nth-child(1) {
+            background: #ff5f57;
+        }
+
+        .mockup-dots span:nth-child(2) {
+            background: #febc2e;
+        }
+
+        .mockup-dots span:nth-child(3) {
+            background: #28c840;
+        }
+
+        .mockup-title {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+        }
+
+        .mockup-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--accent3);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent3);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .mockup-body {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            min-height: 280px;
+        }
+
+        .mock-panel {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .mock-panel-label {
+            font-size: 9px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mock-panel-label::before {
+            content: '';
+            width: 12px;
+            height: 1px;
+            background: var(--accent);
+        }
+
+        .mock-line {
+            height: 8px;
+            background: var(--glass);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mock-line::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 2s infinite;
+            width: 60%;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(250%);
+            }
+        }
+
+        .mock-line.w80 {
+            width: 80%;
+        }
+
+        .mock-line.w60 {
+            width: 60%;
+        }
+
+        .mock-line.w90 {
+            width: 90%;
+        }
+
+        .mock-line.w70 {
+            width: 70%;
+        }
+
+        .mock-line.w40 {
+            width: 40%;
+        }
+
+        .mock-highlight {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 12px;
+            font-size: 10px;
+            color: var(--accent3);
+            line-height: 1.6;
+        }
+
+        .mock-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--accent3);
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            padding: 3px 8px;
+            border-radius: 2px;
+            margin-bottom: 10px;
+        }
+
+        .mock-waveform {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 32px;
+            margin: 12px 0;
+        }
+
+        .mock-wave-bar {
+            width: 3px;
+            background: var(--accent);
+            border-radius: 2px;
+            animation: wave 1s infinite ease-in-out;
+        }
+
+        @keyframes wave {
+
+            0%,
+            100% {
+                transform: scaleY(0.3);
+            }
+
+            50% {
+                transform: scaleY(1);
+            }
+        }
+
+        /* SECTION BASE */
+        section {
+            position: relative;
+            z-index: 1;
+            padding: 120px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            opacity: 0.3;
+        }
+
+        h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(36px, 5vw, 64px);
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -2px;
+            margin-bottom: 20px;
+        }
+
+        h2 em {
+            font-family: 'Instrument Serif', serif;
+            font-style: italic;
+            font-weight: 400;
+            color: var(--accent);
+        }
+
+        .section-desc {
+            max-width: 480px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.8;
+            margin-bottom: 64px;
+        }
+
+        /* FEATURES */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .feature-card {
+            background: var(--bg);
+            padding: 40px 32px;
+            transition: background 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ffffff, #888888);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s ease;
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-card:hover {
+            background: rgba(13, 17, 23, 0.8);
+        }
+
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .feature-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .feature-text {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .feature-tag {
+            margin-top: 20px;
+            display: inline-block;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            border-bottom: 1px solid rgba(0, 229, 255, 0.3);
+            padding-bottom: 2px;
+        }
+
+        /* HOW IT WORKS */
+        .how-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .step {
+            display: flex;
+            gap: 24px;
+            padding: 28px 0;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            transition: padding-left 0.3s;
+            cursor: default;
+        }
+
+        .step:hover {
+            padding-left: 8px;
+        }
+
+        .step:last-child {
+            border-bottom: none;
+        }
+
+        .step-num {
+            font-family: 'Syne', sans-serif;
+            font-size: 40px;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.04);
+            line-height: 1;
+            min-width: 48px;
+            transition: color 0.3s;
+        }
+
+        .step:hover .step-num {
+            color: rgba(0, 229, 255, 0.15);
+        }
+
+        .step-content h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .step-content p {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .step-chip {
+            display: inline-block;
+            background: rgba(0, 229, 255, 0.08);
+            color: var(--accent);
+            font-size: 9px;
+            letter-spacing: 0.12em;
+            padding: 3px 10px;
+            border-radius: 2px;
+            margin-top: 8px;
+        }
+
+        /* TECH STACK */
+        .tech-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .tech-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tech-header span {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+        }
+
+        .tech-header .file-badge {
+            font-size: 9px;
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            color: #a78bfa;
+            padding: 2px 8px;
+            border-radius: 2px;
+        }
+
+        .code-block {
+            padding: 24px 20px;
+            font-size: 12px;
+            line-height: 1.8;
+            color: #8892a4;
+        }
+
+        .code-block .kw {
+            color: #c792ea;
+        }
+
+        .code-block .fn {
+            color: var(--accent);
+        }
+
+        .code-block .str {
+            color: var(--accent3);
+        }
+
+        .code-block .cm {
+            color: #3d4a5c;
+        }
+
+        .code-block .num {
+            color: #f78c6c;
+        }
+
+        /* METRICS */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-top: 64px;
+        }
+
+        .metric-card {
+            background: var(--bg);
+            padding: 40px 28px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -3px;
+            background: linear-gradient(135deg, #ffffff, #888888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        /* ARCH DIAGRAM */
+        .arch-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .arch-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, rgba(180, 180, 180, 0.03) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .arch-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 16px;
+        }
+
+        .arch-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px 24px;
+            text-align: center;
+            min-width: 140px;
+            transition: all 0.3s;
+        }
+
+        .arch-box:hover {
+            border-color: var(--accent);
+            background: rgba(0, 229, 255, 0.05);
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+
+        .arch-box .ab-label {
+            font-size: 9px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .arch-box .ab-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .arch-box.accent {
+            border-color: rgba(0, 229, 255, 0.3);
+        }
+
+        .arch-box.accent .ab-name {
+            color: var(--accent);
+        }
+
+        .arch-box.purple {
+            border-color: rgba(124, 58, 237, 0.3);
+        }
+
+        .arch-box.purple .ab-name {
+            color: #a78bfa;
+        }
+
+        .arch-box.green {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .arch-box.green .ab-name {
+            color: var(--accent3);
+        }
+
+        .arch-arrow {
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            color: var(--muted);
+            font-size: 18px;
+        }
+
+        .arch-arrow-v {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--muted);
+            font-size: 14px;
+            padding: 4px 0;
+        }
+
+        .arch-line-v {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+        }
+
+        /* MASKING SECTION */
+        .masking-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .compare-box {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .compare-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .compare-header .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .compare-header.visible-to-you {
+            background: rgba(0, 229, 255, 0.03);
+        }
+
+        .compare-header.hidden-to-share {
+            background: rgba(255, 68, 102, 0.03);
+        }
+
+        .compare-header.visible-to-you .indicator {
+            background: var(--accent3);
+        }
+
+        .compare-header.hidden-to-share .indicator {
+            background: var(--danger);
+        }
+
+        .compare-body {
+            padding: 24px;
+            min-height: 160px;
+            position: relative;
+        }
+
+        .hidden-overlay {
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(45deg,
+                    rgba(255, 68, 102, 0.03) 0px,
+                    rgba(255, 68, 102, 0.03) 10px,
+                    transparent 10px,
+                    transparent 20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hidden-text {
+            font-family: 'Syne', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            color: rgba(255, 68, 102, 0.2);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .mini-overlay-ui {
+            background: rgba(13, 17, 23, 0.92);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .mini-overlay-ui .mo-header {
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .mini-line {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+            margin-bottom: 6px;
+            border-radius: 3px;
+        }
+
+        .mini-line.w75 {
+            width: 75%;
+        }
+
+        .mini-line.w55 {
+            width: 55%;
+        }
+
+        .mini-line.w85 {
+            width: 85%;
+        }
+
+        /* PRICING */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .price-card {
+            background: var(--bg);
+            padding: 40px 32px;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        .price-card.featured {
+            background: rgba(0, 229, 255, 0.03);
+        }
+
+        .price-card.featured::before {
+            content: 'MOST POPULAR';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            background: var(--bg);
+            padding: 4px 16px;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-top: none;
+        }
+
+        .price-tier {
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+
+        .price-amount {
+            font-family: 'Syne', sans-serif;
+            font-size: 48px;
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .price-amount span {
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--muted);
+        }
+
+        .price-period {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 32px;
+        }
+
+        .price-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .price-features li {
+            font-size: 12px;
+            color: var(--muted);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .price-features li::before {
+            content: '→';
+            color: var(--accent);
+            flex-shrink: 0;
+            line-height: 1.4;
+        }
+
+        .price-features li.dim {
+            opacity: 0.4;
+        }
+
+        .price-features li.dim::before {
+            content: '—';
+            color: var(--muted);
+        }
+
+        .btn-plan {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: none;
+            transition: all 0.2s;
+        }
+
+        .btn-plan:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-plan.featured-btn {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--bg);
+            font-weight: 700;
+        }
+
+        .btn-plan.featured-btn:hover {
+            box-shadow: 0 0 24px rgba(0, 229, 255, 0.4);
+        }
+
+        /* FOOTER */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .footer-logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 16px;
+            letter-spacing: -0.5px;
+        }
+
+        .footer-note {
+            font-size: 11px;
+            color: var(--muted);
+            letter-spacing: 0.05em;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            font-size: 11px;
+            color: var(--muted);
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <!-- NAV -->
+    <nav>
+        <div class="nav-logo">
+            <span class="dot"></span>
+            NotePilot
+        </div>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#masking">Masking</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+        </ul>
+        <button class="nav-cta">Download Beta</button>
+    </nav>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-glow"></div>
+        <div class="hero-glow2"></div>
+
+        <div class="badge">
+            <span class="badge-blink"></span>
+            Zero-Visibility Operation · Windows 10/11
+        </div>
+
+        <h1>Your AI co-pilot.<br /><em>Completely</em> invisible.</h1>
+
+        <p class="hero-sub">
+            Real-time meeting intelligence that lives as a floating overlay — visible only to you.
+            Powered by SetWindowDisplayAffinity with WDA_EXCLUDEFROMCAPTURE.
+            Built with Tauri + Rust + React.
+        </p>
+
+        <div class="hero-actions">
+            <button class="btn-primary">Get Early Access</button>
+            <button class="btn-ghost">View on GitHub →</button>
+        </div>
+
+        <div class="hero-mockup">
+            <div class="mockup-frame">
+                <div class="mockup-bar">
+                    <div class="mockup-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <div class="mockup-title">NOTEPILOT · OVERLAY · v0.9.2</div>
+                    <div class="mockup-status">
+                        <span class="status-dot"></span>
+                        Live · Capturing
+                    </div>
+                </div>
+                <div class="mockup-body">
+                    <div class="mock-panel">
+                        <div class="mock-panel-label">Live Transcription</div>
+                        <div class="mock-waveform">
+                            <div class="mock-wave-bar" style="height:40%;animation-delay:0s"></div>
+                            <div class="mock-wave-bar" style="height:80%;animation-delay:0.1s"></div>
+                            <div class="mock-wave-bar" style="height:55%;animation-delay:0.2s"></div>
+                            <div class="mock-wave-bar" style="height:100%;animation-delay:0.3s"></div>
+                            <div class="mock-wave-bar" style="height:65%;animation-delay:0.4s"></div>
+                            <div class="mock-wave-bar" style="height:45%;animation-delay:0.5s"></div>
+                            <div class="mock-wave-bar" style="height:90%;animation-delay:0.6s"></div>
+                            <div class="mock-wave-bar" style="height:70%;animation-delay:0.7s"></div>
+                            <div class="mock-wave-bar" style="height:50%;animation-delay:0.8s"></div>
+                            <div class="mock-wave-bar" style="height:85%;animation-delay:0.9s"></div>
+                        </div>
+                        <div class="mock-line w90"></div>
+                        <div class="mock-line w70"></div>
+                        <div class="mock-line w80"></div>
+                        <div class="mock-line w60"></div>
+                        <div class="mock-line w40"></div>
+                    </div>
+                    <div class="mock-panel">
+                        <div class="mock-panel-label">AI Insights</div>
+                        <div class="mock-badge">● AI RESPONDING</div>
+                        <div class="mock-highlight">
+                            — Budget discussed: $240K<br />
+                            — Decision needed: Q3 launch<br />
+                            — Action: Follow up by Friday
+                        </div>
+                        <div style="margin-top:12px">
+                            <div class="mock-line w80"></div>
+                            <div class="mock-line w60"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- METRICS -->
+    <section>
+        <div class="metrics-grid reveal">
+            <div class="metric-card">
+                <div class="metric-value">&lt;300</div>
+                <div class="metric-label">ms Audio Latency</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">0%</div>
+                <div class="metric-label">Screen Share Visibility</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">Win32</div>
+                <div class="metric-label">API Integration</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">∞</div>
+                <div class="metric-label">Meeting Support</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features">
+        <div class="section-label">Core Capabilities</div>
+        <h2>Built for the<br /><em>invisible</em> edge.</h2>
+        <p class="section-desc">
+            Every feature engineered around one guarantee: you see everything, they see nothing.
+            NotePilot operates at the OS level — not just the app level.
+        </p>
+
+        <div class="features-grid reveal">
+            <div class="feature-card">
+                <span class="feature-icon">👁️</span>
+                <div class="feature-title">Zero-Visibility Mode</div>
+                <p class="feature-text">
+                    Windows SetWindowDisplayAffinity API with WDA_EXCLUDEFROMCAPTURE renders the overlay completely
+                    absent from all DXGI/desktop duplication capture methods including Zoom, Teams, OBS, and Discord.
+                </p>
+                <span class="feature-tag">WDA_EXCLUDEFROMCAPTURE</span>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🎙️</span>
+                <div class="feature-title">Live Transcription</div>
+                <p class="feature-text">
+                    Sub-300ms audio pipeline transcribes speech in real-time, streaming tokens to the overlay as fast as
+                    they're generated. Never lose a word said in any meeting.
+                </p>
+                <span class="feature-tag">~300ms Latency</span>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🤖</span>
+                <div class="feature-title">AI Insights Engine</div>
+                <p class="feature-text">
+                    Context-aware answers, action item detection, decision tracking, and real-time summarization — all
+                    surfaced as subtle, scannable cards inside the overlay.
+                </p>
+                <span class="feature-tag">LLM-Powered</span>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🦀</span>
+                <div class="feature-title">Rust Backend</div>
+                <p class="feature-text">
+                    The Tauri + Rust core handles Win32 API calls, window management, audio capture, and IPC with zero
+                    overhead. No Electron. No bloat. Native performance.
+                </p>
+                <span class="feature-tag">Tauri + Rust</span>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🪟</span>
+                <div class="feature-title">Frameless Overlay</div>
+                <p class="feature-text">
+                    Transparent, borderless, always-on-top window that floats above your meetings. Fully draggable,
+                    resizable, and collapsible with a single keyboard shortcut.
+                </p>
+                <span class="feature-tag">Ctrl+Alt+M</span>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">⚡</span>
+                <div class="feature-title">Glassmorphism UI</div>
+                <p class="feature-text">
+                    Premium dark-mode React frontend with backdrop blur, gradient borders, and micro-animations.
+                    Designed to blend seamlessly over any meeting interface.
+                </p>
+                <span class="feature-tag">React + CSS</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="architecture">
+        <div class="how-wrap">
+            <div>
+                <div class="section-label">Architecture</div>
+                <h2>How the<br /><em>masking</em> works.</h2>
+                <p class="section-desc">
+                    A three-layer system that separates what the OS renders from what screen capture sees.
+                </p>
+
+                <div class="steps reveal">
+                    <div class="step">
+                        <span class="step-num">01</span>
+                        <div class="step-content">
+                            <h3>Window Initialization</h3>
+                            <p>Tauri spawns a frameless, transparent, always-on-top window. The Rust setup hook
+                                immediately retrieves the native HWND handle from the Win32 API.</p>
+                            <span class="step-chip">src-tauri/src/lib.rs</span>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-num">02</span>
+                        <div class="step-content">
+                            <h3>Display Affinity Flag</h3>
+                            <p>SetWindowDisplayAffinity is called with WDA_EXCLUDEFROMCAPTURE. This tells the DWM
+                                compositor to exclude the window from all DXGI capture surfaces.</p>
+                            <span class="step-chip">WDA_EXCLUDEFROMCAPTURE</span>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-num">03</span>
+                        <div class="step-content">
+                            <h3>Capture Isolation</h3>
+                            <p>Screen recording software using BitBlt, DXGI Desktop Duplication, or Windows Graphics
+                                Capture receives a blank region where NotePilot lives.</p>
+                            <span class="step-chip">Windows 10/11 Only</span>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-num">04</span>
+                        <div class="step-content">
+                            <h3>React Frontend Renders</h3>
+                            <p>The WebView2-backed React UI draws over your local display normally — glassmorphism, live
+                                text, AI cards — only you can see it.</p>
+                            <span class="step-chip">WebView2 + React</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code panel -->
+            <div class="reveal">
+                <div class="tech-panel">
+                    <div class="tech-header">
+                        <span>src-tauri/src/lib.rs</span>
+                        <span class="file-badge">RUST</span>
+                    </div>
+                    <div class="code-block">
+                        <div><span class="cm">// NotePilot — Zero-Visibility Setup</span></div>
+                        <div><span class="kw">use</span> windows::Win32::{</div>
+                        <div>&nbsp;&nbsp;Foundation::HWND,</div>
+                        <div>&nbsp;&nbsp;UI::WindowsAndMessaging::{</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">SetWindowDisplayAffinity</span>,</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;WDA_EXCLUDEFROMCAPTURE</div>
+                        <div>&nbsp;&nbsp;}</div>
+                        <div>};</div>
+                        <div>&nbsp;</div>
+                        <div><span class="kw">pub fn</span> <span class="fn">setup</span>(app: &amp;App) -&gt;
+                            Result&lt;()&gt; {</div>
+                        <div>&nbsp;&nbsp;<span class="kw">let</span> window = app</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">get_window</span>(<span
+                                class="str">"main"</span>)</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">unwrap</span>();</div>
+                        <div>&nbsp;</div>
+                        <div>&nbsp;&nbsp;<span class="kw">let</span> hwnd = HWND(window</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;.<span class="fn">hwnd</span>()?.<span class="num">0</span>);</div>
+                        <div>&nbsp;</div>
+                        <div>&nbsp;&nbsp;<span class="cm">// 🔒 Mask from screen capture</span></div>
+                        <div>&nbsp;&nbsp;<span class="kw">unsafe</span> {</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">SetWindowDisplayAffinity</span>(</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hwnd,</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WDA_EXCLUDEFROMCAPTURE</div>
+                        <div>&nbsp;&nbsp;&nbsp;&nbsp;)</div>
+                        <div>&nbsp;&nbsp;}</div>
+                        <div>}</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px;">
+                    <div class="arch-container">
+                        <div class="arch-row">
+                            <div class="arch-box accent">
+                                <div class="ab-label">Audio In</div>
+                                <div class="ab-name">Mic / System</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-box purple">
+                                <div class="ab-label">Rust Core</div>
+                                <div class="ab-name">Tauri IPC</div>
+                            </div>
+                            <div class="arch-arrow">→</div>
+                            <div class="arch-box green">
+                                <div class="ab-label">AI Layer</div>
+                                <div class="ab-name">LLM API</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;justify-content:center">
+                            <div class="arch-arrow-v">
+                                <div class="arch-line-v"></div>
+                                <span style="font-size:12px">↓</span>
+                                <div class="arch-line-v"></div>
+                            </div>
+                        </div>
+                        <div class="arch-row">
+                            <div class="arch-box accent" style="min-width:340px">
+                                <div class="ab-label">React WebView2 · WDA_EXCLUDEFROMCAPTURE</div>
+                                <div class="ab-name">Floating Overlay · You Only</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MASKING VISUAL -->
+    <section id="masking"
+        style="background: rgba(255,68,102,0.01); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); max-width:100%; padding: 120px 80px;">
+        <div style="max-width:1200px; margin: 0 auto;">
+            <div class="masking-split">
+                <div>
+                    <div class="section-label">Screen Share Masking</div>
+                    <h2>They share.<br /><em>You know.</em></h2>
+                    <p class="section-desc">
+                        When your colleague shares their screen, or when you share yours, NotePilot simply doesn't exist
+                        in the capture feed. The Windows DWM compositor excludes it at the hardware composition level —
+                        not via tricks or hacks.
+                    </p>
+                    <p class="section-desc" style="font-size:12px; color: rgba(255,68,102,0.7);">
+                        ⚠ Windows 10 (v2004+) and Windows 11 only. Cross-platform masking requires per-OS API
+                        implementations.
+                    </p>
+                </div>
+
+                <div class="reveal" style="display:flex;flex-direction:column;gap:16px;">
+                    <div class="compare-box">
+                        <div class="compare-header visible-to-you">
+                            <span class="indicator"></span>
+                            What you see on your local display
+                        </div>
+                        <div class="compare-body">
+                            <div class="mini-overlay-ui">
+                                <div class="mo-header">● NotePilot · Live</div>
+                                <div class="mini-line w85"></div>
+                                <div class="mini-line w75"></div>
+                                <div class="mini-line w55"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="compare-box">
+                        <div class="compare-header hidden-to-share">
+                            <span class="indicator"></span>
+                            What screen-share software captures
+                        </div>
+                        <div class="compare-body">
+                            <div class="hidden-overlay">
+                                <div class="hidden-text">INVISIBLE</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING -->
+    <section id="pricing">
+        <div class="section-label">Plans</div>
+        <h2>Start invisible.<br /><em>Stay ahead.</em></h2>
+        <p class="section-desc">
+            NotePilot runs locally. No subscription required for the core masking engine.
+            AI features are usage-billed.
+        </p>
+
+        <div class="pricing-grid reveal">
+            <div class="price-card">
+                <div class="price-tier">Solo</div>
+                <div class="price-amount">$0<span>/mo</span></div>
+                <div class="price-period">Free forever</div>
+                <ul class="price-features">
+                    <li>Invisible overlay</li>
+                    <li>Always-on-top window</li>
+                    <li>Keyboard shortcuts</li>
+                    <li class="dim">Live transcription</li>
+                    <li class="dim">AI insights</li>
+                    <li class="dim">Export / sync</li>
+                </ul>
+                <button class="btn-plan">Download Free</button>
+            </div>
+            <div class="price-card featured">
+                <div class="price-tier">Pilot</div>
+                <div class="price-amount">$12<span>/mo</span></div>
+                <div class="price-period">Billed monthly</div>
+                <ul class="price-features">
+                    <li>Everything in Solo</li>
+                    <li>Live transcription (300ms)</li>
+                    <li>AI insights & action items</li>
+                    <li>10h/month audio processing</li>
+                    <li>Export to Notion / Obsidian</li>
+                    <li class="dim">Team features</li>
+                </ul>
+                <button class="btn-plan featured-btn">Start Free Trial</button>
+            </div>
+            <div class="price-card">
+                <div class="price-tier">Fleet</div>
+                <div class="price-amount">$29<span>/mo</span></div>
+                <div class="price-period">Per seat, billed monthly</div>
+                <ul class="price-features">
+                    <li>Everything in Pilot</li>
+                    <li>Unlimited audio processing</li>
+                    <li>Team shared context</li>
+                    <li>Admin dashboard</li>
+                    <li>SSO + custom AI endpoints</li>
+                    <li>Priority support & SLA</li>
+                </ul>
+                <button class="btn-plan">Contact Sales</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-logo">NotePilot</div>
+        <ul class="footer-links">
+            <li><a href="#">Docs</a></li>
+            <li><a href="#">GitHub</a></li>
+            <li><a href="#">Privacy</a></li>
+            <li><a href="#">@notepilot</a></li>
+        </ul>
+        <p class="footer-note">© 2025 NotePilot. Windows 10/11 only.</p>
+    </footer>
+
+    <script>
+        // Custom cursor
+        const cursor = document.getElementById('cursor');
+        const ring = document.getElementById('cursorRing');
+        let mx = 0, my = 0, rx = 0, ry = 0;
+
+        document.addEventListener('mousemove', e => {
+            mx = e.clientX; my = e.clientY;
+            cursor.style.left = mx + 'px';
+            cursor.style.top = my + 'px';
+        });
+
+        function animateRing() {
+            rx += (mx - rx) * 0.12;
+            ry += (my - ry) * 0.12;
+            ring.style.left = rx + 'px';
+            ring.style.top = ry + 'px';
+            requestAnimationFrame(animateRing);
+        }
+        animateRing();
+
+        document.querySelectorAll('button, a, .feature-card, .step, .arch-box').forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                ring.style.width = '54px';
+                ring.style.height = '54px';
+                ring.style.borderColor = 'rgba(0,229,255,0.8)';
+            });
+            el.addEventListener('mouseleave', () => {
+                ring.style.width = '36px';
+                ring.style.height = '36px';
+                ring.style.borderColor = 'rgba(0,229,255,0.4)';
+            });
+        });
+
+        // Scroll reveal
+        const reveals = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach((e, i) => {
+                if (e.isIntersecting) {
+                    setTimeout(() => e.target.classList.add('visible'), i * 80);
+                }
+            });
+        }, { threshold: 0.1 });
+        reveals.forEach(el => observer.observe(el));
+
+        // Randomize wave bar heights for mockup
+        document.querySelectorAll('.mock-wave-bar').forEach(bar => {
+            setInterval(() => {
+                const h = 30 + Math.random() * 70;
+                bar.style.height = h + '%';
+            }, 400 + Math.random() * 200);
+        });
+
+        // Nav active link highlight on scroll
+        const sections = document.querySelectorAll('section[id]');
+        window.addEventListener('scroll', () => {
+            let pos = window.scrollY + 100;
+            sections.forEach(s => {
+                if (pos >= s.offsetTop && pos < s.offsetTop + s.offsetHeight) {
+                    document.querySelectorAll('.nav-links a').forEach(a => {
+                        a.style.color = a.getAttribute('href') === '#' + s.id
+                            ? 'var(--accent)' : '';
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
