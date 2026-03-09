@@ -13,11 +13,13 @@
     "windows": [
       {
         "title": "notepilot",
-        "width": 800,
-        "height": 600,
+        "width": 390,
+        "height": 320,
         "decorations": false,
         "transparent": true,
-        "alwaysOnTop": true
+        "alwaysOnTop": true,
+        "maximized": false,
+        "resizable": true
       }
     ],
     "security": {
