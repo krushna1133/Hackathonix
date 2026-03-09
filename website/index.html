@@ -31,6 +31,339 @@
             --danger: #888888;
         }
 
+        /* ===== LIGHT THEME ===== */
+        html.light {
+            --bg: #f5f5f0;
+            --surface: #eaeae4;
+            --glass: rgba(0, 0, 0, 0.03);
+            --border: rgba(0, 0, 0, 0.12);
+            --accent: #111111;
+            --accent2: #555555;
+            --accent3: #333333;
+            --text: #111111;
+            --muted: #888888;
+            --danger: #777777;
+        }
+
+        html.light body::after {
+            background-image:
+                linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+        }
+
+        html.light nav {
+            background: rgba(245, 245, 240, 0.92) !important;
+        }
+
+        html.light .hero-glow {
+            background: radial-gradient(circle, rgba(0, 0, 0, 0.04) 0%, transparent 70%) !important;
+        }
+
+        html.light .hero-glow2 {
+            background: radial-gradient(circle, rgba(100, 100, 100, 0.03) 0%, transparent 70%) !important;
+        }
+
+        html.light .mockup-frame {
+            background: rgba(230, 230, 225, 0.97) !important;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06) !important;
+        }
+
+        html.light .mockup-bar {
+            background: rgba(0, 0, 0, 0.04) !important;
+        }
+
+        html.light .mock-panel {
+            background: rgba(0, 0, 0, 0.03) !important;
+        }
+
+        html.light .mock-line {
+            background: rgba(0, 0, 0, 0.08) !important;
+        }
+
+        html.light .mock-highlight {
+            background: rgba(0, 0, 0, 0.04) !important;
+            border-color: rgba(0, 0, 0, 0.1) !important;
+            color: #333 !important;
+        }
+
+        html.light .mock-badge {
+            background: rgba(0, 0, 0, 0.05) !important;
+            border-color: rgba(0, 0, 0, 0.12) !important;
+            color: #333 !important;
+        }
+
+        html.light .mock-wave-bar {
+            background: #222 !important;
+        }
+
+        html.light .status-dot {
+            background: #333 !important;
+        }
+
+        html.light .mockup-status {
+            color: #333 !important;
+        }
+
+        html.light .nav-logo .dot {
+            background: #111 !important;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        html.light .badge {
+            border-color: rgba(0, 0, 0, 0.18) !important;
+            background: rgba(0, 0, 0, 0.04) !important;
+            color: #111 !important;
+        }
+
+        html.light .badge-blink {
+            background: #111 !important;
+        }
+
+        html.light .cursor {
+            background: #111 !important;
+        }
+
+        html.light .cursor-ring {
+            border-color: rgba(0, 0, 0, 0.3) !important;
+        }
+
+        html.light .tech-panel {
+            background: #e4e4de !important;
+        }
+
+        html.light .tech-header {
+            background: rgba(0, 0, 0, 0.04) !important;
+        }
+
+        html.light .code-block {
+            color: #555 !important;
+        }
+
+        html.light .code-block .kw {
+            color: #7c3aed !important;
+        }
+
+        html.light .code-block .fn {
+            color: #111 !important;
+        }
+
+        html.light .code-block .str {
+            color: #333 !important;
+        }
+
+        html.light .code-block .cm {
+            color: #bbb !important;
+        }
+
+        html.light .code-block .num {
+            color: #c2440a !important;
+        }
+
+        html.light .arch-container {
+            background: #e4e4de !important;
+        }
+
+        html.light .arch-box {
+            background: rgba(0, 0, 0, 0.04) !important;
+        }
+
+        html.light .feature-card {
+            background: var(--bg) !important;
+        }
+
+        html.light .feature-card:hover {
+            background: rgba(220, 220, 215, 0.9) !important;
+        }
+
+        html.light .price-card {
+            background: var(--bg) !important;
+        }
+
+        html.light .price-card.featured {
+            background: rgba(0, 0, 0, 0.04) !important;
+        }
+
+        html.light .mini-overlay-ui {
+            background: rgba(225, 225, 220, 0.97) !important;
+            border-color: rgba(0, 0, 0, 0.15) !important;
+        }
+
+        html.light .mini-line {
+            background: rgba(0, 0, 0, 0.1) !important;
+        }
+
+        html.light .mo-header {
+            color: #333 !important;
+        }
+
+        html.light .compare-box {
+            background: #eaeae4 !important;
+        }
+
+        html.light .hidden-text {
+            color: rgba(200, 50, 50, 0.18) !important;
+        }
+
+        html.light .metric-card {
+            background: var(--bg) !important;
+        }
+
+        html.light .metric-value {
+            background: linear-gradient(135deg, #111, #666) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+        }
+
+        html.light .btn-primary {
+            background: #111 !important;
+            color: #f5f5f0 !important;
+        }
+
+        html.light .btn-ghost {
+            border-color: rgba(0, 0, 0, 0.2) !important;
+            color: #666 !important;
+        }
+
+        html.light .btn-ghost:hover {
+            border-color: #555 !important;
+            color: #111 !important;
+        }
+
+        html.light .section-label {
+            color: #111 !important;
+        }
+
+        html.light .feature-card::before {
+            background: linear-gradient(90deg, #111, #666) !important;
+        }
+
+        html.light .mock-line::after {
+            background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.06), transparent) !important;
+        }
+
+        html.light .price-card.featured::before {
+            color: #111 !important;
+            background: var(--bg) !important;
+            border-color: rgba(0, 0, 0, 0.2) !important;
+        }
+
+        html.light .btn-plan.featured-btn {
+            background: #111 !important;
+            border-color: #111 !important;
+            color: #f5f5f0 !important;
+        }
+
+        html.light .section-label::after {
+            background: linear-gradient(90deg, #111, transparent) !important;
+        }
+
+        html.light .step-chip {
+            background: rgba(0, 0, 0, 0.06) !important;
+            color: #333 !important;
+        }
+
+        html.light .arch-box.accent .ab-name {
+            color: #111 !important;
+        }
+
+        html.light .arch-box.purple .ab-name {
+            color: #6d28d9 !important;
+        }
+
+        html.light .arch-box.green .ab-name {
+            color: #333 !important;
+        }
+
+        /* ===== THEME TOGGLE BUTTON ===== */
+        .theme-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-theme-toggle {
+            position: relative;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 7px 14px;
+            font-family: 'DM Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            cursor: none;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            text-transform: uppercase;
+            overflow: hidden;
+        }
+
+        .btn-theme-toggle::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--accent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.25s ease;
+            z-index: 0;
+        }
+
+        .btn-theme-toggle:hover::before {
+            transform: scaleX(1);
+        }
+
+        .btn-theme-toggle:hover {
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .btn-theme-toggle span,
+        .btn-theme-toggle .toggle-icon {
+            position: relative;
+            z-index: 1;
+        }
+
+        .toggle-icon {
+            font-size: 13px;
+            transition: transform 0.4s ease;
+            display: inline-block;
+        }
+
+        .btn-theme-toggle:hover .toggle-icon {
+            transform: rotate(20deg);
+        }
+
+        /* Keep-as-is button */
+        .btn-reset {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--muted);
+            padding: 7px 12px;
+            font-family: 'DM Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            cursor: none;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-6px);
+        }
+
+        .btn-reset.visible {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateX(0);
+        }
+
+        .btn-reset:hover {
+            color: var(--text);
+            border-color: var(--border);
+        }
+
         html {
             scroll-behavior: smooth;
         }
@@ -43,6 +376,7 @@
             line-height: 1.6;
             overflow-x: hidden;
             cursor: none;
+            transition: background 0.4s ease, color 0.4s ease;
         }
 
         /* Custom cursor */
@@ -55,8 +389,12 @@
             pointer-events: none;
             z-index: 9999;
             transform: translate(-50%, -50%);
-            transition: transform 0.1s, opacity 0.3s;
+            transition: transform 0.1s, opacity 0.3s, background 0.3s;
             mix-blend-mode: screen;
+        }
+
+        html.light .cursor {
+            mix-blend-mode: multiply;
         }
 
         .cursor-ring {
@@ -68,7 +406,11 @@
             pointer-events: none;
             z-index: 9998;
             transform: translate(-50%, -50%);
-            transition: transform 0.18s ease, width 0.2s, height 0.2s, opacity 0.3s;
+            transition: transform 0.18s ease, width 0.2s, height 0.2s, opacity 0.3s, border-color 0.3s;
+        }
+
+        html.light .cursor-ring {
+            border-color: rgba(0, 0, 0, 0.25);
         }
 
         /* Noise overlay */
@@ -110,6 +452,7 @@
             background: rgba(7, 10, 15, 0.85);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
+            transition: background 0.4s ease, border-color 0.4s ease;
         }
 
         .nav-logo {
@@ -129,6 +472,7 @@
             border-radius: 50%;
             box-shadow: 0 0 10px var(--accent);
             animation: pulse 2s infinite;
+            transition: background 0.3s, box-shadow 0.3s;
         }
 
         @keyframes pulse {
@@ -183,6 +527,10 @@
             box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
         }
 
+        html.light .nav-cta:hover {
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        }
+
         /* HERO */
         .hero {
             position: relative;
@@ -206,6 +554,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
+            transition: background 0.4s;
         }
 
         .hero-glow2 {
@@ -216,6 +565,7 @@
             top: 30%;
             left: 20%;
             pointer-events: none;
+            transition: background 0.4s;
         }
 
         .badge {
@@ -231,6 +581,7 @@
             color: var(--accent);
             margin-bottom: 32px;
             animation: fadeUp 0.6s ease both;
+            transition: border-color 0.4s, background 0.4s, color 0.4s;
         }
 
         .badge-blink {
@@ -239,6 +590,7 @@
             background: var(--accent);
             border-radius: 50%;
             animation: blink 1.2s infinite;
+            transition: background 0.3s;
         }
 
         @keyframes blink {
@@ -319,6 +671,10 @@
             box-shadow: 0 0 30px rgba(255, 255, 255, 0.25);
         }
 
+        html.light .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+        }
+
         .btn-ghost {
             background: transparent;
             border: 1px solid var(--border);
@@ -352,6 +708,7 @@
             overflow: hidden;
             backdrop-filter: blur(40px);
             box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transition: background 0.4s, box-shadow 0.4s;
         }
 
         .mockup-bar {
@@ -361,6 +718,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            transition: background 0.4s;
         }
 
         .mockup-dots {
@@ -398,6 +756,7 @@
             gap: 6px;
             font-size: 10px;
             color: var(--accent3);
+            transition: color 0.3s;
         }
 
         .status-dot {
@@ -406,6 +765,7 @@
             background: var(--accent3);
             border-radius: 50%;
             animation: pulse 1.5s infinite;
+            transition: background 0.3s;
         }
 
         .mockup-body {
@@ -421,6 +781,7 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 16px;
+            transition: background 0.4s;
         }
 
         .mock-panel-label {
@@ -439,6 +800,7 @@
             width: 12px;
             height: 1px;
             background: var(--accent);
+            transition: background 0.3s;
         }
 
         .mock-line {
@@ -448,6 +810,7 @@
             margin-bottom: 8px;
             position: relative;
             overflow: hidden;
+            transition: background 0.4s;
         }
 
         .mock-line::after {
@@ -500,6 +863,7 @@
             font-size: 10px;
             color: var(--accent3);
             line-height: 1.6;
+            transition: background 0.4s, border-color 0.4s, color 0.3s;
         }
 
         .mock-badge {
@@ -512,6 +876,7 @@
             padding: 3px 8px;
             border-radius: 2px;
             margin-bottom: 10px;
+            transition: all 0.4s;
         }
 
         .mock-waveform {
@@ -527,6 +892,7 @@
             background: var(--accent);
             border-radius: 2px;
             animation: wave 1s infinite ease-in-out;
+            transition: background 0.3s;
         }
 
         @keyframes wave {
@@ -559,6 +925,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            transition: color 0.3s;
         }
 
         .section-label::after {
@@ -567,6 +934,7 @@
             height: 1px;
             background: linear-gradient(90deg, var(--accent), transparent);
             opacity: 0.3;
+            transition: background 0.3s;
         }
 
         h2 {
@@ -659,6 +1027,11 @@
             color: var(--accent);
             border-bottom: 1px solid rgba(0, 229, 255, 0.3);
             padding-bottom: 2px;
+            transition: color 0.3s;
+        }
+
+        html.light .feature-tag {
+            border-bottom-color: rgba(0, 0, 0, 0.2);
         }
 
         /* HOW IT WORKS */
@@ -681,7 +1054,7 @@
             padding: 28px 0;
             border-bottom: 1px solid var(--border);
             position: relative;
-            transition: padding-left 0.3s;
+            transition: padding-left 0.3s, border-color 0.4s;
             cursor: default;
         }
 
@@ -703,8 +1076,16 @@
             transition: color 0.3s;
         }
 
+        html.light .step-num {
+            color: rgba(0, 0, 0, 0.04);
+        }
+
         .step:hover .step-num {
             color: rgba(0, 229, 255, 0.15);
+        }
+
+        html.light .step:hover .step-num {
+            color: rgba(0, 0, 0, 0.12);
         }
 
         .step-content h3 {
@@ -730,6 +1111,7 @@
             padding: 3px 10px;
             border-radius: 2px;
             margin-top: 8px;
+            transition: all 0.3s;
         }
 
         /* TECH STACK */
@@ -738,6 +1120,7 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             overflow: hidden;
+            transition: background 0.4s, border-color 0.4s;
         }
 
         .tech-header {
@@ -747,6 +1130,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            transition: background 0.4s;
         }
 
         .tech-header span {
@@ -764,11 +1148,17 @@
             border-radius: 2px;
         }
 
+        html.light .tech-header .file-badge {
+            background: rgba(124, 58, 237, 0.08);
+            color: #6d28d9;
+        }
+
         .code-block {
             padding: 24px 20px;
             font-size: 12px;
             line-height: 1.8;
             color: #8892a4;
+            transition: color 0.3s;
         }
 
         .code-block .kw {
@@ -805,6 +1195,7 @@
             background: var(--bg);
             padding: 40px 28px;
             text-align: center;
+            transition: background 0.4s;
         }
 
         .metric-value {
@@ -818,6 +1209,7 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 8px;
+            transition: background 0.4s;
         }
 
         .metric-label {
@@ -835,6 +1227,7 @@
             padding: 40px;
             position: relative;
             overflow: hidden;
+            transition: background 0.4s, border-color 0.4s;
         }
 
         .arch-container::before {
@@ -869,6 +1262,11 @@
             border-color: var(--accent);
             background: rgba(0, 229, 255, 0.05);
             box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+
+        html.light .arch-box:hover {
+            background: rgba(0, 0, 0, 0.06);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
         }
 
         .arch-box .ab-label {
@@ -909,6 +1307,14 @@
             color: var(--accent3);
         }
 
+        html.light .arch-box.accent {
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        html.light .arch-box.purple .ab-name {
+            color: #6d28d9;
+        }
+
         .arch-arrow {
             display: flex;
             align-items: center;
@@ -944,6 +1350,7 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             overflow: hidden;
+            transition: border-color 0.4s;
         }
 
         .compare-header {
@@ -988,10 +1395,8 @@
             position: absolute;
             inset: 0;
             background: repeating-linear-gradient(45deg,
-                    rgba(255, 68, 102, 0.03) 0px,
-                    rgba(255, 68, 102, 0.03) 10px,
-                    transparent 10px,
-                    transparent 20px);
+                    rgba(255, 68, 102, 0.03) 0px, rgba(255, 68, 102, 0.03) 10px,
+                    transparent 10px, transparent 20px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1013,6 +1418,7 @@
             padding: 16px;
             backdrop-filter: blur(20px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: background 0.4s, border-color 0.4s;
         }
 
         .mini-overlay-ui .mo-header {
@@ -1021,6 +1427,7 @@
             color: var(--accent);
             margin-bottom: 10px;
             text-transform: uppercase;
+            transition: color 0.3s;
         }
 
         .mini-line {
@@ -1028,7 +1435,7 @@
             background: rgba(255, 255, 255, 0.06);
             border-radius: 3px;
             margin-bottom: 6px;
-            border-radius: 3px;
+            transition: background 0.4s;
         }
 
         .mini-line.w75 {
@@ -1056,11 +1463,15 @@
             background: var(--bg);
             padding: 40px 32px;
             position: relative;
-            transition: background 0.3s;
+            transition: background 0.4s;
         }
 
         .price-card.featured {
             background: rgba(0, 229, 255, 0.03);
+        }
+
+        html.light .price-card.featured {
+            background: rgba(0, 0, 0, 0.04);
         }
 
         .price-card.featured::before {
@@ -1076,6 +1487,11 @@
             padding: 4px 16px;
             border: 1px solid rgba(0, 229, 255, 0.3);
             border-top: none;
+            transition: color 0.3s, background 0.4s, border-color 0.4s;
+        }
+
+        html.light .price-card.featured::before {
+            border-color: rgba(0, 0, 0, 0.2);
         }
 
         .price-tier {
@@ -1128,6 +1544,7 @@
             color: var(--accent);
             flex-shrink: 0;
             line-height: 1.4;
+            transition: color 0.3s;
         }
 
         .price-features li.dim {
@@ -1167,6 +1584,10 @@
 
         .btn-plan.featured-btn:hover {
             box-shadow: 0 0 24px rgba(0, 229, 255, 0.4);
+        }
+
+        html.light .btn-plan.featured-btn:hover {
+            box-shadow: 0 0 24px rgba(0, 0, 0, 0.15);
         }
 
         /* FOOTER */
@@ -1272,7 +1693,18 @@
             <li><a href="#masking">Masking</a></li>
             <li><a href="#pricing">Pricing</a></li>
         </ul>
-        <button class="nav-cta">Download Beta</button>
+
+        <!-- Theme controls: toggle + reset -->
+        <div class="theme-controls">
+            <button class="btn-reset" id="btnReset" title="Reset to default dark theme">
+                ↩ Reset
+            </button>
+            <button class="btn-theme-toggle" id="btnTheme" title="Toggle light / dark mode">
+                <span class="toggle-icon" id="toggleIcon">☀</span>
+                <span id="toggleLabel">Light</span>
+            </button>
+            <button class="nav-cta">Download Beta</button>
+        </div>
     </nav>
 
     <!-- HERO -->
@@ -1640,7 +2072,7 @@
             </div>
             <div class="price-card featured">
                 <div class="price-tier">Pilot</div>
-                <div class="price-amount">$12<span>/mo</span></div>
+                <div class="price-amount">₹999<span>/mo</span></div>
                 <div class="price-period">Billed monthly</div>
                 <ul class="price-features">
                     <li>Everything in Solo</li>
@@ -1654,7 +2086,7 @@
             </div>
             <div class="price-card">
                 <div class="price-tier">Fleet</div>
-                <div class="price-amount">$29<span>/mo</span></div>
+                <div class="price-amount">₹1999<span>/mo</span></div>
                 <div class="price-period">Per seat, billed monthly</div>
                 <ul class="price-features">
                     <li>Everything in Pilot</li>
@@ -1682,7 +2114,7 @@
     </footer>
 
     <script>
-        // Custom cursor
+        // ===== CUSTOM CURSOR =====
         const cursor = document.getElementById('cursor');
         const ring = document.getElementById('cursorRing');
         let mx = 0, my = 0, rx = 0, ry = 0;
@@ -1706,16 +2138,53 @@
             el.addEventListener('mouseenter', () => {
                 ring.style.width = '54px';
                 ring.style.height = '54px';
-                ring.style.borderColor = 'rgba(0,229,255,0.8)';
+                ring.style.borderColor = document.documentElement.classList.contains('light')
+                    ? 'rgba(0,0,0,0.5)' : 'rgba(0,229,255,0.8)';
             });
             el.addEventListener('mouseleave', () => {
                 ring.style.width = '36px';
                 ring.style.height = '36px';
-                ring.style.borderColor = 'rgba(0,229,255,0.4)';
+                ring.style.borderColor = document.documentElement.classList.contains('light')
+                    ? 'rgba(0,0,0,0.25)' : 'rgba(0,229,255,0.4)';
             });
         });
 
-        // Scroll reveal
+        // ===== THEME TOGGLE =====
+        const html = document.documentElement;
+        const btnTheme = document.getElementById('btnTheme');
+        const btnReset = document.getElementById('btnReset');
+        const toggleIcon = document.getElementById('toggleIcon');
+        const toggleLabel = document.getElementById('toggleLabel');
+
+        let isLight = false;
+        let hasChanged = false;
+
+        function applyTheme(light) {
+            isLight = light;
+            if (light) {
+                html.classList.add('light');
+                toggleIcon.textContent = '🌙';
+                toggleLabel.textContent = 'Dark';
+            } else {
+                html.classList.remove('light');
+                toggleIcon.textContent = '☀';
+                toggleLabel.textContent = 'Light';
+            }
+        }
+
+        btnTheme.addEventListener('click', () => {
+            hasChanged = true;
+            applyTheme(!isLight);
+            btnReset.classList.add('visible');
+        });
+
+        btnReset.addEventListener('click', () => {
+            hasChanged = false;
+            applyTheme(false); // reset to dark (default)
+            btnReset.classList.remove('visible');
+        });
+
+        // ===== SCROLL REVEAL =====
         const reveals = document.querySelectorAll('.reveal');
         const observer = new IntersectionObserver(entries => {
             entries.forEach((e, i) => {
@@ -1726,7 +2195,7 @@
         }, { threshold: 0.1 });
         reveals.forEach(el => observer.observe(el));
 
-        // Randomize wave bar heights for mockup
+        // ===== WAVEFORM ANIMATION =====
         document.querySelectorAll('.mock-wave-bar').forEach(bar => {
             setInterval(() => {
                 const h = 30 + Math.random() * 70;
@@ -1734,7 +2203,7 @@
             }, 400 + Math.random() * 200);
         });
 
-        // Nav active link highlight on scroll
+        // ===== NAV ACTIVE LINK =====
         const sections = document.querySelectorAll('section[id]');
         window.addEventListener('scroll', () => {
             let pos = window.scrollY + 100;
