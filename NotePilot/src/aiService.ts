@@ -4,7 +4,7 @@
 // ⚠️ Replace with your API key from https://aistudio.google.com
 const GEMINI_API_KEY = "AIzaSyCSUGXTpci6F4pJSwn_LLJXzw8n41dTiwI";
 
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_API_KEY}`;
 
 const SYSTEM_PROMPT = `You are NotePilot, an intelligent AI meeting assistant embedded in a floating desktop widget. Your role is to help users during their meetings by:
 - Taking and organizing meeting minutes
@@ -93,7 +93,7 @@ async function callGemini(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error("Gemini API error:", errorData);
-      if (response.status === 400 && GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+      if (response.status === 400 && GEMINI_API_KEY === "AIzaSyCSUGXTpci6F4pJSwn_LLJXzw8n41dTiwI") {
         return "⚠️ Please set your Gemini API key in `src/aiService.ts`. Get a free key at [aistudio.google.com](https://aistudio.google.com)";
       }
       return `⚠️ API Error (${response.status}). Please check your API key and try again.`;
