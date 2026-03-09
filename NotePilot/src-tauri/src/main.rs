@@ -1,21 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::{Manager, WebviewWindowBuilder};
+use tauri::Manager;
 
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
-            let window = WebviewWindowBuilder::new(
-                app,
-                "main",
-                tauri::WebviewUrl::App("index.html".into()),
-            )
-            .title("NotePilot")
-            .maximized(true)
-            .decorations(false)
-            .always_on_top(true)
-            .transparent(true)
-            .build()?;
+            let window = app.get_webview_window("main").unwrap();
 
             #[cfg(target_os = "macos")]
             {
