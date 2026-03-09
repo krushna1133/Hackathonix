@@ -17,12 +17,23 @@ fn main() {
             #[cfg(target_os = "windows")]
             {
                 use windows::Win32::Foundation::HWND;
-                use windows::Win32::UI::WindowsAndMessaging::{SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE};
+                use windows::Win32::UI::WindowsAndMessaging::{
+                    SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE,
+                    SetWindowPos, HWND_TOPMOST, SWP_NOMOVE, SWP_NOSIZE
+                };
 
                 if let Ok(hwnd) = window.hwnd() {
                     unsafe {
-                      
+                        // 1. Hide from screen capture overlays (Zoom, Discord, OBS, etc.)
                         let _ = SetWindowDisplayAffinity(HWND(hwnd.0 as _), WDA_EXCLUDEFROMCAPTURE);
+
+                        // 2. Force window to stay topmost regardless of focus
+                        let _ = SetWindowPos(
+                            HWND(hwnd.0 as _),
+                            HWND_TOPMOST,
+                            0, 0, 0, 0,
+                            SWP_NOMOVE | SWP_NOSIZE
+                        );
                     }
                 }
             }
