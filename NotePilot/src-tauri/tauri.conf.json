@@ -10,18 +10,21 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "notepilot",
         "width": 440,
         "height": 580,
-        "minWidth": 360,
-        "minHeight": 420,
         "decorations": false,
         "transparent": true,
         "alwaysOnTop": true,
-        "maximized": false,
-        "resizable": true
+        "resizable": true,
+        "visibleOnAllWorkspaces": true,
+        "skipTaskbar": true,
+        "contentProtected": true,
+        "acceptFirstMouse": true,
+        "shadow": false
       }
     ],
     "security": {

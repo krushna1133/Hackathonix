@@ -339,7 +339,7 @@ function App() {
       {toast && <div className="toast">{toast}</div>}
 
       {/* TOP PILL BAR */}
-      <div className="top-bar-container">
+      <div data-tauri-drag-region className="top-bar-container">
         <div className="control-pill" data-tauri-drag-region>
           <button
             className="icon-btn tooltip-anchor"
@@ -376,7 +376,7 @@ function App() {
             {isCollapsed ? <ChevronDown /> : <ChevronUp />}
           </button>
           <div className="vertical-divider"></div>
-          <button
+          <button 
             className="icon-btn drag-btn"
             data-tauri-drag-region
             title="Drag to move"

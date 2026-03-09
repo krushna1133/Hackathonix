@@ -2,7 +2,7 @@
 // Uses Gemini 2.0 Flash via REST API
 
 // ⚠️ Replace with your API key from https://aistudio.google.com
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+const GEMINI_API_KEY = "AIzaSyCSUGXTpci6F4pJSwn_LLJXzw8n41dTiwI";
 
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
