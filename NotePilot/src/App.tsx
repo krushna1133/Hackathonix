@@ -10,6 +10,12 @@ import {
   type ChatMessage,
   type MinuteEntry,
 } from "./aiService";
+import {
+  AudioRecorder,
+  isSpeechRecognitionSupported,
+  type TranscriptSegment,
+  type AudioStatus,
+} from "./audioService";
 import "./App.css";
 
 // ─── SVG Icons ───
@@ -37,6 +43,13 @@ const Play = () => (
 const Square = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+  </svg>
+);
+const Mic = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="22" />
   </svg>
 );
 const ChevronUp = () => (
@@ -75,30 +88,38 @@ const Plus = () => (
     <path d="M12 5v14" /><path d="M5 12h14" />
   </svg>
 );
+const Trash = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
+  </svg>
+);
 
 function App() {
   // ─── Core State ───
   const [activeTab, setActiveTab] = useState<"chat" | "transcript">("chat");
   const [inputText, setInputText] = useState("");
 
-  // Recording state
-  const [isRecording, setIsRecording] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
+  // Audio / recording state
+  const [audioStatus, setAudioStatus] = useState<AudioStatus>("idle");
+  const [isSupported] = useState(() => isSpeechRecognitionSupported());
 
   // UI state
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isStealthMode, setIsStealthMode] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Meeting minutes
+  // Meeting minutes (manual entries)
   const [minutes, setMinutes] = useState<MinuteEntry[]>([]);
+
+  // Live transcript segments from speech recognition
+  const [transcriptSegments, setTranscriptSegments] = useState<TranscriptSegment[]>([]);
 
   // AI Chat
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: generateId(),
       role: "system",
-      text: "👋 Welcome to NotePilot! I'm your AI meeting assistant. Add meeting minutes in the Transcript tab, then ask me anything or use the quick actions above.",
+      text: "👋 Welcome to NotePilot! Click 🎤 to start recording. Spoken words will appear in the Transcript tab automatically. You can also type minutes manually.",
       timestamp: getTimestamp(),
     },
   ]);
@@ -111,12 +132,61 @@ function App() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const appRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const recorderRef = useRef<AudioRecorder | null>(null);
 
-  // ─── Resize State ───
+  // Resize refs
   const isResizing = useRef(false);
   const resizeStart = useRef({ y: 0, height: 0 });
+
+  // ─── Initialize AudioRecorder once ───
+  useEffect(() => {
+    const recorder = new AudioRecorder();
+
+    recorder.onStatusChange = (status: AudioStatus) => {
+      setAudioStatus(status);
+      if (status === "listening") showToast("🎤 Listening...");
+      if (status === "paused") showToast("⏸️ Recording paused");
+      if (status === "stopped") showToast("⏹️ Recording stopped");
+      if (status === "error") showToast("❌ Mic error — check permissions");
+    };
+
+    recorder.onTranscript = (segment: TranscriptSegment) => {
+      setTranscriptSegments((prev) => {
+        // If this id already exists, replace it (interim update)
+        const exists = prev.findIndex((s) => s.id === segment.id);
+        if (exists !== -1) {
+          const updated = [...prev];
+          updated[exists] = segment;
+          return updated;
+        }
+        // New segment
+        return [...prev, segment];
+      });
+
+      // If it's a final result, also auto-add to minutes
+      if (segment.isFinal && segment.text.trim().length > 3) {
+        setMinutes((prev) => [
+          ...prev,
+          {
+            id: generateId(),
+            text: segment.text.trim(),
+            timestamp: segment.timestamp,
+          },
+        ]);
+      }
+    };
+
+    recorder.onError = (error: string) => {
+      showToast(`❌ ${error}`);
+    };
+
+    recorderRef.current = recorder;
+
+    return () => {
+      recorder.stop();
+    };
+  }, []);
 
   // ─── Toast Helper ───
   const showToast = useCallback((msg: string) => {
@@ -131,11 +201,11 @@ function App() {
 
   useEffect(() => {
     if (activeTab === "transcript") transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [minutes, activeTab]);
+  }, [minutes, transcriptSegments, activeTab]);
 
+  // ─── Window resize drag ───
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      // Handle resize
       if (isResizing.current) {
         const delta = e.clientY - resizeStart.current.y;
         const newHeight = Math.max(120, Math.min(800, resizeStart.current.height + delta));
@@ -157,7 +227,6 @@ function App() {
     };
   }, []);
 
-  // ─── Resize Handler ───
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     isResizing.current = true;
@@ -167,63 +236,76 @@ function App() {
     document.body.style.userSelect = "none";
   }, []);
 
-  // ─── Button Handlers ───
-  const handleToggleStealth = () => {
-    setIsStealthMode((prev) => !prev);
-    showToast(isStealthMode ? "🔓 Stealth mode OFF" : "🔒 Stealth mode ON — hidden from screen capture");
+  // ─── Audio Controls ───
+  const handleStartRecording = async () => {
+    if (!isSupported) {
+      showToast("❌ Speech recognition not supported in this browser");
+      return;
+    }
+    await recorderRef.current?.start();
+    setActiveTab("transcript"); // Switch to transcript tab when recording starts
   };
 
   const handleTogglePause = () => {
-    if (!isRecording) return;
-    setIsPaused((prev) => !prev);
-    showToast(isPaused ? "▶️ Recording resumed" : "⏸️ Recording paused");
+    const recorder = recorderRef.current;
+    if (!recorder) return;
+    if (recorder.paused) {
+      recorder.resume();
+    } else {
+      recorder.pause();
+    }
   };
 
   const handleStop = () => {
-    if (!isRecording) {
-      setIsRecording(true);
-      setIsPaused(false);
-      showToast("🔴 Recording started");
-      return;
-    }
-    setIsRecording(false);
-    setIsPaused(false);
-    showToast("⏹️ Recording stopped");
+    recorderRef.current?.stop();
+  };
+
+  // ─── Other UI Handlers ───
+  const handleToggleStealth = () => {
+    setIsStealthMode((prev) => !prev);
+    showToast(isStealthMode ? "🔓 Stealth mode OFF" : "🔒 Stealth mode ON");
   };
 
   const handleCollapse = () => setIsCollapsed((prev) => !prev);
 
   const handleClose = async () => {
     try {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      getCurrentWindow().close();
-    } catch {
+      const { Window } = await import("@tauri-apps/api/window");
+      const win = Window.getCurrent();
+      await win.close();
+    } catch (e) {
+      console.error("Close failed:", e);
       showToast("✕ Close (only works in desktop app)");
     }
   };
 
   const handleHome = () => {
     setActiveTab("chat");
-    showToast("🏠 Home");
   };
 
-  // ─── Add Meeting Minute ───
+  // ─── Add Manual Minute ───
   const addMinute = (text: string) => {
     if (!text.trim()) return;
-    const minute: MinuteEntry = {
-      id: generateId(),
-      text: text.trim(),
-      timestamp: getTimestamp(),
-    };
-    setMinutes((prev) => [...prev, minute]);
+    setMinutes((prev) => [
+      ...prev,
+      { id: generateId(), text: text.trim(), timestamp: getTimestamp() },
+    ]);
     showToast("📝 Minute added");
   };
 
-  // ─── AI Interaction ───
-  const sendToAi = async (prompt: string, isActionButton = false) => {
-    if (!prompt.trim() && !isActionButton) return;
+  const deleteMinute = (id: string) => {
+    setMinutes((prev) => prev.filter((m) => m.id !== id));
+    showToast("🗑️ Removed");
+  };
 
-    // Add user message to chat
+  const clearTranscript = () => {
+    setTranscriptSegments([]);
+    showToast("🗑️ Transcript cleared");
+  };
+
+  // ─── AI Interaction ───
+  const sendToAi = async (prompt: string) => {
+    if (!prompt.trim()) return;
     const userMsg: ChatMessage = {
       id: generateId(),
       role: "user",
@@ -233,24 +315,17 @@ function App() {
     setMessages((prev) => [...prev, userMsg]);
     setIsAiLoading(true);
     setActiveTab("chat");
-
     try {
       const response = await sendChatMessage(prompt, messages, minutes);
-      const aiMsg: ChatMessage = {
-        id: generateId(),
-        role: "ai",
-        text: response,
-        timestamp: getTimestamp(),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
+      setMessages((prev) => [
+        ...prev,
+        { id: generateId(), role: "ai", text: response, timestamp: getTimestamp() },
+      ]);
     } catch {
-      const errorMsg: ChatMessage = {
-        id: generateId(),
-        role: "ai",
-        text: "⚠️ Something went wrong. Please try again.",
-        timestamp: getTimestamp(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      setMessages((prev) => [
+        ...prev,
+        { id: generateId(), role: "ai", text: "⚠️ Something went wrong. Please try again.", timestamp: getTimestamp() },
+      ]);
     } finally {
       setIsAiLoading(false);
     }
@@ -262,53 +337,30 @@ function App() {
   ) => {
     setIsAiLoading(true);
     setActiveTab("chat");
-
-    // Show what the user clicked
-    const userMsg: ChatMessage = {
-      id: generateId(),
-      role: "user",
-      text: `✨ ${label}`,
-      timestamp: getTimestamp(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-
+    setMessages((prev) => [
+      ...prev,
+      { id: generateId(), role: "user", text: `✨ ${label}`, timestamp: getTimestamp() },
+    ]);
     try {
       let response: string;
-      switch (action) {
-        case "assist":
-          response = await getAssist(messages, minutes);
-          break;
-        case "suggest":
-          response = await getSuggestion(messages, minutes);
-          break;
-        case "followup":
-          response = await getFollowUps(messages, minutes);
-          break;
-        case "recap":
-          response = await getRecap(messages, minutes);
-          break;
-      }
-      const aiMsg: ChatMessage = {
-        id: generateId(),
-        role: "ai",
-        text: response,
-        timestamp: getTimestamp(),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
+      if (action === "assist") response = await getAssist(messages, minutes);
+      else if (action === "suggest") response = await getSuggestion(messages, minutes);
+      else if (action === "followup") response = await getFollowUps(messages, minutes);
+      else response = await getRecap(messages, minutes);
+      setMessages((prev) => [
+        ...prev,
+        { id: generateId(), role: "ai", text: response, timestamp: getTimestamp() },
+      ]);
     } catch {
-      const errorMsg: ChatMessage = {
-        id: generateId(),
-        role: "ai",
-        text: "⚠️ Could not get a response. Please try again.",
-        timestamp: getTimestamp(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      setMessages((prev) => [
+        ...prev,
+        { id: generateId(), role: "ai", text: "⚠️ Could not get a response.", timestamp: getTimestamp() },
+      ]);
     } finally {
       setIsAiLoading(false);
     }
   };
 
-  // ─── Send Handler ───
   const handleSend = () => {
     if (!inputText.trim()) return;
     if (activeTab === "transcript") {
@@ -327,14 +379,17 @@ function App() {
     }
   };
 
-  // ─── Delete Minute ───
-  const deleteMinute = (id: string) => {
-    setMinutes((prev) => prev.filter((m) => m.id !== id));
-    showToast("🗑️ Minute removed");
-  };
+  // ─── Derived state ───
+  const isRecording = audioStatus === "listening" || audioStatus === "paused";
+  const isPaused = audioStatus === "paused";
+  const isListening = audioStatus === "listening";
+
+  // Combine live transcript + manual minutes for the transcript tab
+  // Show live (interim) segments separately at the top of transcript tab
+  const liveSegments = transcriptSegments.filter((s) => !s.isFinal);
 
   return (
-    <div className="app-wrapper" ref={appRef}>
+    <div className="app-wrapper">
       {/* TOAST */}
       {toast && <div className="toast">{toast}</div>}
 
@@ -342,41 +397,75 @@ function App() {
       <div data-tauri-drag-region className="top-bar-container">
         <div className="control-pill" data-tauri-drag-region>
           <button
-            className="icon-btn tooltip-anchor"
+            className="icon-btn"
             onClick={handleToggleStealth}
             title={isStealthMode ? "Disable stealth" : "Enable stealth mode"}
           >
             {isStealthMode ? <EyeOff /> : <Eye />}
           </button>
+
           <div className="playback-controls">
-            <button
-              className={`icon-btn ${isPaused ? "paused-btn" : ""}`}
-              onClick={handleTogglePause}
-              title={isPaused ? "Resume" : "Pause"}
-              disabled={!isRecording}
-            >
-              {isPaused ? <Play /> : <Pause />}
-            </button>
-            <div className="divider-sm"></div>
-            <button
-              className={`icon-btn ${!isRecording ? "stopped-btn" : ""}`}
-              onClick={handleStop}
-              title={isRecording ? "Stop recording" : "Start recording"}
-            >
-              <Square />
-            </button>
+            {/* Mic / Start button — only shown when not recording */}
+            {!isRecording && (
+              <button
+                className="icon-btn mic-start-btn"
+                onClick={handleStartRecording}
+                title={isSupported ? "Start recording" : "Speech recognition not supported"}
+                disabled={!isSupported || audioStatus === "requesting"}
+              >
+                <Mic />
+              </button>
+            )}
+
+            {/* Pause/Resume — only shown while recording */}
+            {isRecording && (
+              <button
+                className={`icon-btn ${isPaused ? "paused-btn" : ""}`}
+                onClick={handleTogglePause}
+                title={isPaused ? "Resume" : "Pause"}
+              >
+                {isPaused ? <Play /> : <Pause />}
+              </button>
+            )}
+
+            {isRecording && <div className="divider-sm"></div>}
+
+            {/* Stop — only shown while recording */}
+            {isRecording && (
+              <button
+                className="icon-btn"
+                onClick={handleStop}
+                title="Stop recording"
+              >
+                <Square />
+              </button>
+            )}
           </div>
-          {isRecording && (
-            <div className={`rec-indicator ${isPaused ? "paused" : ""}`}>
+
+          {/* Recording indicator */}
+          {isListening && (
+            <div className="rec-indicator">
               <span className="rec-dot"></span>
-              <span className="rec-text">{isPaused ? "PAUSED" : "REC"}</span>
+              <span className="rec-text">LIVE</span>
             </div>
           )}
+          {isPaused && (
+            <div className="rec-indicator paused">
+              <span className="rec-dot"></span>
+              <span className="rec-text">PAUSED</span>
+            </div>
+          )}
+          {audioStatus === "requesting" && (
+            <div className="rec-indicator">
+              <span className="rec-text">MIC...</span>
+            </div>
+          )}
+
           <button className="icon-btn" onClick={handleCollapse} title={isCollapsed ? "Expand" : "Collapse"}>
             {isCollapsed ? <ChevronDown /> : <ChevronUp />}
           </button>
           <div className="vertical-divider"></div>
-          <button 
+          <button
             className="icon-btn drag-btn"
             data-tauri-drag-region
             title="Drag to move"
@@ -393,7 +482,7 @@ function App() {
       <div
         ref={panelRef}
         className={`main-panel ${isCollapsed ? "collapsed" : ""}`}
-        style={panelHeight && !isCollapsed ? { height: `${panelHeight}px`, flex: 'none' } : undefined}
+        style={panelHeight && !isCollapsed ? { height: `${panelHeight}px` } : undefined}
       >
         <div className="panel-header">
           <button className="icon-btn home-btn" onClick={handleHome} title="Home">
@@ -411,8 +500,22 @@ function App() {
               onClick={() => setActiveTab("transcript")}
             >
               Transcript
+              {minutes.length > 0 && (
+                <span className="tab-badge">{minutes.length}</span>
+              )}
             </button>
           </div>
+          {/* Clear transcript button */}
+          {activeTab === "transcript" && (transcriptSegments.length > 0 || minutes.length > 0) && (
+            <button
+              className="icon-btn"
+              onClick={clearTranscript}
+              title="Clear live transcript"
+              style={{ marginLeft: "auto", opacity: 0.6 }}
+            >
+              <Trash />
+            </button>
+          )}
         </div>
 
         {/* ACTION BUTTONS */}
@@ -422,11 +525,11 @@ function App() {
           </button>
           <span className="dot">•</span>
           <button className="action-btn" onClick={() => handleActionButton("suggest", "What should I say?")} disabled={isAiLoading}>
-            🪄 What should I say?
+            🪄 Suggest
           </button>
           <span className="dot">•</span>
           <button className="action-btn" onClick={() => handleActionButton("followup", "Follow-up questions")} disabled={isAiLoading}>
-            💬 Follow-up questions
+            💬 Follow-ups
           </button>
           <span className="dot">•</span>
           <button className="action-btn" onClick={() => handleActionButton("recap", "Recap")} disabled={isAiLoading}>
@@ -459,10 +562,25 @@ function App() {
             </div>
           ) : (
             <div className="transcript-list">
-              {minutes.length === 0 ? (
+              {/* Live interim text (what's being spoken right now) */}
+              {liveSegments.length > 0 && (
+                <div className="live-transcript-banner">
+                  <span className="live-dot"></span>
+                  <span className="live-text">
+                    {liveSegments[liveSegments.length - 1].text}
+                  </span>
+                </div>
+              )}
+
+              {/* Final minutes */}
+              {minutes.length === 0 && liveSegments.length === 0 ? (
                 <div className="empty-state">
-                  <span className="empty-icon">📝</span>
-                  <p>No minutes yet. Type below and press Enter to add meeting minutes.</p>
+                  <span className="empty-icon">🎤</span>
+                  <p>
+                    {isSupported
+                      ? "Press the mic button to start recording. Speech will appear here automatically."
+                      : "Speech recognition not supported. Type minutes manually below."}
+                  </p>
                 </div>
               ) : (
                 minutes.map((minute) => (
@@ -492,14 +610,9 @@ function App() {
             {!inputText && (
               <div className="input-placeholder">
                 {activeTab === "transcript" ? (
-                  <>
-                    <Plus /> Add a meeting minute...
-                  </>
+                  <><Plus /> Add a minute manually...</>
                 ) : (
-                  <>
-                    Ask about your screen or conversation, or <kbd>^</kbd>{" "}
-                    <kbd>↵</kbd> for Assist
-                  </>
+                  <>Ask anything about the meeting...</>
                 )}
               </div>
             )}
