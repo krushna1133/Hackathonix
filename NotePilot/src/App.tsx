@@ -114,10 +114,6 @@ function App() {
   const appRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // ─── Drag State (browser fallback) ───
-  const isDragging = useRef(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
-
   // ─── Resize State ───
   const isResizing = useRef(false);
   const resizeStart = useRef({ y: 0, height: 0 });
@@ -137,37 +133,8 @@ function App() {
     if (activeTab === "transcript") transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [minutes, activeTab]);
 
-  // ─── Drag Handlers (browser fallback) ───
-  const handleDragStart = useCallback(async (e: React.MouseEvent) => {
-    // Try Tauri drag first
-    try {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      getCurrentWindow().startDragging();
-      return;
-    } catch {
-      // Not in Tauri, use browser fallback
-    }
-
-    // Browser fallback: move the app-wrapper
-    if (!appRef.current) return;
-    isDragging.current = true;
-    const rect = appRef.current.getBoundingClientRect();
-    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    document.body.style.cursor = "grabbing";
-    document.body.style.userSelect = "none";
-  }, []);
-
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      // Handle drag
-      if (isDragging.current && appRef.current) {
-        const x = e.clientX - dragOffset.current.x;
-        const y = e.clientY - dragOffset.current.y;
-        appRef.current.style.position = "fixed";
-        appRef.current.style.left = `${x}px`;
-        appRef.current.style.top = `${y}px`;
-        appRef.current.style.transform = "none";
-      }
       // Handle resize
       if (isResizing.current) {
         const delta = e.clientY - resizeStart.current.y;
@@ -176,11 +143,6 @@ function App() {
       }
     };
     const handleMouseUp = () => {
-      if (isDragging.current) {
-        isDragging.current = false;
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-      }
       if (isResizing.current) {
         isResizing.current = false;
         document.body.style.cursor = "";
@@ -378,7 +340,7 @@ function App() {
 
       {/* TOP PILL BAR */}
       <div className="top-bar-container">
-        <div className="control-pill">
+        <div className="control-pill" data-tauri-drag-region>
           <button
             className="icon-btn tooltip-anchor"
             onClick={handleToggleStealth}
@@ -416,7 +378,7 @@ function App() {
           <div className="vertical-divider"></div>
           <button
             className="icon-btn drag-btn"
-            onMouseDown={handleDragStart}
+            data-tauri-drag-region
             title="Drag to move"
           >
             <GripVertical />

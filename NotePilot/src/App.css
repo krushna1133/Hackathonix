@@ -11,7 +11,8 @@
 
 html, body {
   width: 100%;
-  height: 100%;
+  height: auto;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
   background: transparent !important;
@@ -21,7 +22,7 @@ html, body {
 
 #root {
   width: 100%;
-  height: 100%;
+  height: auto;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -48,8 +49,7 @@ kbd {
   gap: 8px;
   width: 100%;
   max-width: 700px;
-  height: 100%;
-  max-height: 100%;
+  height: auto;
 }
 
 /* ─── Tauri Drag ─── */
@@ -244,10 +244,10 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  flex: 1;
+  flex: none;
   min-height: 0;
   overflow: hidden;
-  transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.3s ease;
+  transition: padding 0.3s ease, opacity 0.3s ease;
 }
 .main-panel.collapsed {
   max-height: 0 !important;
