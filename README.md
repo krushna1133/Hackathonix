@@ -299,18 +299,19 @@ downloadMeetingPDF(minutes: MinuteEntry[], title?: string): void
 
 ## Security & Compliance
 
-NotePilot maintains enterprise-grade security and data processing standards:
+NotePilot is designed with enterprise-grade security and data processing standards in mind:
 
 ### Certifications & Regulations
 
-| Standard | Status |
-|----------|--------|
-| SOC 2 Type 1 & Type 2 | ✅ Compliant |
-| ISO 27001 | ✅ Certified |
-| GDPR | ✅ Compliant |
-| CCPA | ✅ Compliant |
-| HIPAA | ✅ Compliant |
+| Standard | Current Status |
+|----------|----------------|
+| SOC 2 Type 1 & Type 2 | Target standard (not formally audited) |
+| ISO 27001 | Target certification (not yet certified) |
+| GDPR | Best-effort alignment (no legal advice; verify for your use case) |
+| CCPA | Best-effort alignment (no legal advice; verify for your use case) |
+| HIPAA | Not for production PHI use; HIPAA compliance not attested |
 
+_The above reflects design goals and current assumptions, not formal compliance attestations or legal guarantees._
 ### Privacy Features
 
 - **Local Processing** - Speech recognition runs locally via Web Speech API
