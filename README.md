@@ -180,17 +180,18 @@ The built application will be available in `src-tauri/target/release/`.
 
 ### API Key Setup
 
-NotePilot uses Google Gemini AI for intelligent meeting assistance. Configure your API key:
+NotePilot uses Google Gemini AI for intelligent meeting assistance. You will need Gemini API access for both the core AI features and the audio/transcription features.
 
 1. Get a free API key from [Google AI Studio](https://aistudio.google.com)
 
-2. Open `src/aiService.ts` and replace the API key:
+2. **Recommended (secure):** Configure your Gemini keys via environment variables or a secret manager instead of hard‑coding them into source files. For example, you can set:
 
-```typescript
-// ⚠️ Replace with your API key from https://aistudio.google.com
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
-```
+   - `GEMINI_API_KEY` – used by `src/aiService.ts` for general AI functionality
+   - `GEMINI_AUDIO_API_KEY` (or reuse `GEMINI_API_KEY`) – used by `src/audioService.ts` for audio/transcription features
 
+   Use your preferred approach (e.g. `.env` file loaded by your tooling, OS environment variables, Docker/Kubernetes secret injection, or your CI/CD secret store) and ensure these values are **never committed to version control**.
+
+3. **Not recommended (local development only):** If you cannot use environment variables yet, you may temporarily paste your API key into `src/aiService.ts` and `src/audioService.ts` for quick local experiments. Do **not** commit these changes or share them publicly.
 ### Tauri Configuration
 
 Edit `src-tauri/tauri.conf.json` to customize:
