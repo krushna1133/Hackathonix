@@ -293,7 +293,7 @@ class AudioRecorder {
 
 ```typescript
 // Download meeting notes as PDF
-downloadMeetingPDF(minutes: MinuteEntry[], title?: string): void
+downloadMeetingPDF(messages: Message[], minutes: MinuteEntry[]): void
 ```
 
 ---
