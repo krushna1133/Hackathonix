@@ -315,9 +315,11 @@ NotePilot is designed with enterprise-grade security and data processing standar
 _The above reflects design goals and current assumptions, not formal compliance attestations or legal guarantees._
 ### Privacy Features
 
-- **Local Processing** - Speech recognition runs locally via Web Speech API
-- **No Data Storage** - Transcripts exist only during the session
-- **API Security** - All AI requests use HTTPS encryption
+- **Hybrid Processing** – Depending on how you configure NotePilot, some speech recognition may run locally via the Web Speech API, while system audio capture and transcription are processed by Google Gemini APIs.
+- **Data Sent to Gemini** – When transcription/AI features are active, segments of captured audio (including system audio) and related text prompts are transmitted off-device to Google Gemini for real-time transcription, analysis, and summarization.
+- **Ephemeral In-App Storage** – NotePilot keeps transcripts and AI outputs in memory for the duration of a session; they are discarded when you close the app unless you explicitly export or save them.
+- **No Server-Side Storage by NotePilot** – The NotePilot application does not send your audio or transcripts to any backend servers owned by the NotePilot developers; communication is directly between your device and the Google Gemini APIs.
+- **API Security** – All AI requests are sent over HTTPS using your configured Gemini API key.
 
 ---
 
