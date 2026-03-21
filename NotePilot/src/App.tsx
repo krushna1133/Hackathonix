@@ -10,69 +10,245 @@ import {
   type ChatMessage,
   type MinuteEntry,
 } from "./aiService";
+import {
+  AudioRecorder,
+  isSpeechRecognitionSupported,
+  type TranscriptSegment,
+  type AudioStatus,
+} from "./audioService";
+import { downloadMeetingPDF } from "./pdfService";
 import "./App.css";
 
-// ─── SVG Icons ───
+// ─── SVG Icons (unchanged) ───
 const Eye = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" />
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
   </svg>
 );
 const EyeOff = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
     <line x1="1" y1="1" x2="23" y2="23" />
   </svg>
 );
 const Pause = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="6" y="4" width="4" height="16" />
+    <rect x="14" y="4" width="4" height="16" />
   </svg>
 );
 const Play = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <polygon points="5 3 19 12 5 21 5 3" />
   </svg>
 );
 const Square = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
   </svg>
 );
+const Mic = () => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="22" />
+  </svg>
+);
 const ChevronUp = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="m18 15-6-6-6 6" />
   </svg>
 );
 const ChevronDown = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="m6 9 6 6 6-6" />
   </svg>
 );
 const GripVertical = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="9" cy="5" r="1.5" /><circle cx="9" cy="12" r="1.5" /><circle cx="9" cy="19" r="1.5" />
-    <circle cx="15" cy="5" r="1.5" /><circle cx="15" cy="12" r="1.5" /><circle cx="15" cy="19" r="1.5" />
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="9" cy="5" r="1.5" />
+    <circle cx="9" cy="12" r="1.5" />
+    <circle cx="9" cy="19" r="1.5" />
+    <circle cx="15" cy="5" r="1.5" />
+    <circle cx="15" cy="12" r="1.5" />
+    <circle cx="15" cy="19" r="1.5" />
   </svg>
 );
 const X = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
   </svg>
 );
 const Home = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <polyline points="9 22 9 12 15 12 15 22" />
   </svg>
 );
 const Send = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" />
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="m22 2-7 20-4-9-9-4Z" />
+    <path d="M22 2 11 13" />
   </svg>
 );
 const Plus = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 5v14" /><path d="M5 12h14" />
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 5v14" />
+    <path d="M5 12h14" />
+  </svg>
+);
+const Trash = () => (
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-1 14H6L5 6" />
+    <path d="M10 11v6" />
+    <path d="M14 11v6" />
+    <path d="M9 6V4h6v2" />
+  </svg>
+);
+const DownloadPdf = () => (
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="12" y1="12" x2="12" y2="18" />
+    <polyline points="9 15 12 18 15 15" />
   </svg>
 );
 
@@ -81,38 +257,52 @@ function App() {
   const [activeTab, setActiveTab] = useState<"chat" | "transcript">("chat");
   const [inputText, setInputText] = useState("");
 
-  // Recording state
-  const [isRecording, setIsRecording] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
+  // Audio / recording
+  const [audioStatus, setAudioStatus] = useState<AudioStatus>("idle");
+  const [isSupported] = useState(() => isSpeechRecognitionSupported());
 
-  // UI state
+  // UI
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isStealthMode, setIsStealthMode] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Meeting minutes
+  // Meeting data
   const [minutes, setMinutes] = useState<MinuteEntry[]>([]);
+  const [transcriptSegments, setTranscriptSegments] = useState<
+    TranscriptSegment[]
+  >([]);
 
-  // AI Chat
+  // AI Chat — FIX: use ref to avoid stale closures
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: generateId(),
       role: "system",
-      text: "👋 Welcome to NotePilot! I'm your AI meeting assistant. Add meeting minutes in the Transcript tab, then ask me anything or use the quick actions above.",
+      text: "👋 Welcome to NotePilot! Click 🎤 to start recording. Speech and system audio will appear in the Transcript tab. You can also type minutes manually or chat with the AI here.",
       timestamp: getTimestamp(),
     },
   ]);
+  const messagesRef = useRef<ChatMessage[]>(messages);
   const [isAiLoading, setIsAiLoading] = useState(false);
+
+  // PDF export
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
+
+  // Panel resize
+  const [panelHeight, setPanelHeight] = useState<number | null>(null);
 
   // Refs
   const chatEndRef = useRef<HTMLDivElement>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const appRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const recorderRef = useRef<AudioRecorder | null>(null);
+  const isResizing = useRef(false);
+  const resizeStart = useRef({ y: 0, height: 0 });
 
-  // ─── Drag State (browser fallback) ───
-  const isDragging = useRef(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
+  // ─── Keep messagesRef in sync ───
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // ─── Toast Helper ───
   const showToast = useCallback((msg: string) => {
@@ -120,48 +310,79 @@ function App() {
     setTimeout(() => setToast(null), 2500);
   }, []);
 
+  // ─── Initialize AudioRecorder ───
+  useEffect(() => {
+    const recorder = new AudioRecorder();
+
+    recorder.onStatusChange = (status: AudioStatus) => {
+      setAudioStatus(status);
+      if (status === "listening") showToast("🎤 Listening...");
+      if (status === "paused") showToast("⏸️ Recording paused");
+      if (status === "stopped") showToast("⏹️ Recording stopped");
+      if (status === "error") showToast("❌ Mic error — check permissions");
+    };
+
+    recorder.onTranscript = (segment: TranscriptSegment) => {
+      // Update live transcript segments
+      setTranscriptSegments((prev) => {
+        const idx = prev.findIndex((s) => s.id === segment.id);
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = segment;
+          return updated;
+        }
+        return [...prev, segment];
+      });
+
+      // Finalized segments with enough content → add as minutes
+      if (segment.isFinal && segment.text.trim().length > 3) {
+        setMinutes((prev) => [
+          ...prev,
+          {
+            id: generateId(),
+            text: segment.text.trim(),
+            timestamp: segment.timestamp,
+          },
+        ]);
+      }
+    };
+
+    recorder.onError = (error: string) => {
+      showToast(`❌ ${error}`);
+    };
+
+    recorderRef.current = recorder;
+
+    return () => {
+      recorder.stop();
+    };
+  }, [showToast]);
+
   // ─── Auto-scroll ───
   useEffect(() => {
-    if (activeTab === "chat") chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (activeTab === "chat")
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, activeTab]);
 
   useEffect(() => {
-    if (activeTab === "transcript") transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [minutes, activeTab]);
+    if (activeTab === "transcript")
+      transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [minutes, transcriptSegments, activeTab]);
 
-  // ─── Drag Handlers (browser fallback) ───
-  const handleDragStart = useCallback(async (e: React.MouseEvent) => {
-    // Try Tauri drag first
-    try {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      getCurrentWindow().startDragging();
-      return;
-    } catch {
-      // Not in Tauri, use browser fallback
-    }
-
-    // Browser fallback: move the app-wrapper
-    if (!appRef.current) return;
-    isDragging.current = true;
-    const rect = appRef.current.getBoundingClientRect();
-    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    document.body.style.cursor = "grabbing";
-    document.body.style.userSelect = "none";
-  }, []);
-
+  // ─── Window resize drag ───
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !appRef.current) return;
-      const x = e.clientX - dragOffset.current.x;
-      const y = e.clientY - dragOffset.current.y;
-      appRef.current.style.position = "fixed";
-      appRef.current.style.left = `${x}px`;
-      appRef.current.style.top = `${y}px`;
-      appRef.current.style.transform = "none";
+      if (!isResizing.current) return;
+      const delta = e.clientY - resizeStart.current.y;
+      const newHeight = Math.max(
+        120,
+        Math.min(800, resizeStart.current.height + delta),
+      );
+      setPanelHeight(newHeight);
     };
     const handleMouseUp = () => {
-      if (isDragging.current) {
-        isDragging.current = false;
+      if (isResizing.current) {
+        isResizing.current = false;
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
       }
@@ -174,218 +395,344 @@ function App() {
     };
   }, []);
 
-  // ─── Button Handlers ───
-  const handleToggleStealth = () => {
-    setIsStealthMode((prev) => !prev);
-    showToast(isStealthMode ? "🔓 Stealth mode OFF" : "🔒 Stealth mode ON — hidden from screen capture");
-  };
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    const currentHeight =
+      panelRef.current?.getBoundingClientRect().height || 400;
+    resizeStart.current = { y: e.clientY, height: currentHeight };
+    document.body.style.cursor = "ns-resize";
+    document.body.style.userSelect = "none";
+  }, []);
 
-  const handleTogglePause = () => {
-    if (!isRecording) return;
-    setIsPaused((prev) => !prev);
-    showToast(isPaused ? "▶️ Recording resumed" : "⏸️ Recording paused");
-  };
-
-  const handleStop = () => {
-    if (!isRecording) {
-      setIsRecording(true);
-      setIsPaused(false);
-      showToast("🔴 Recording started");
+  // ─── Audio Controls ───
+  const handleStartRecording = useCallback(async () => {
+    if (!isSupported) {
+      showToast("❌ Speech recognition not supported in this browser");
       return;
     }
-    setIsRecording(false);
-    setIsPaused(false);
-    showToast("⏹️ Recording stopped");
-  };
+    await recorderRef.current?.start();
+    setActiveTab("transcript");
+  }, [isSupported, showToast]);
 
-  const handleCollapse = () => setIsCollapsed((prev) => !prev);
+  const handleTogglePause = useCallback(() => {
+    const recorder = recorderRef.current;
+    if (!recorder) return;
+    if (recorder.paused) recorder.resume();
+    else recorder.pause();
+  }, []);
 
-  const handleClose = async () => {
+  const handleStop = useCallback(() => {
+    recorderRef.current?.stop();
+  }, []);
+
+  // ─── UI Handlers ───
+  const handleToggleStealth = useCallback(() => {
+    setIsStealthMode((prev) => {
+      showToast(prev ? "🔓 Stealth mode OFF" : "🔒 Stealth mode ON");
+      return !prev;
+    });
+  }, [showToast]);
+
+  const handleCollapse = useCallback(() => setIsCollapsed((prev) => !prev), []);
+
+  const handleClose = useCallback(async () => {
     try {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      getCurrentWindow().close();
+      const { Window } = await import("@tauri-apps/api/window");
+      const win = Window.getCurrent();
+      await win.close();
     } catch {
       showToast("✕ Close (only works in desktop app)");
     }
-  };
+  }, [showToast]);
 
-  const handleHome = () => {
-    setActiveTab("chat");
-    showToast("🏠 Home");
-  };
+  const handleHome = useCallback(() => setActiveTab("chat"), []);
 
-  // ─── Add Meeting Minute ───
-  const addMinute = (text: string) => {
-    if (!text.trim()) return;
-    const minute: MinuteEntry = {
-      id: generateId(),
-      text: text.trim(),
-      timestamp: getTimestamp(),
-    };
-    setMinutes((prev) => [...prev, minute]);
-    showToast("📝 Minute added");
-  };
+  // ─── Minutes ───
+  const addMinute = useCallback(
+    (text: string) => {
+      if (!text.trim()) return;
+      setMinutes((prev) => [
+        ...prev,
+        { id: generateId(), text: text.trim(), timestamp: getTimestamp() },
+      ]);
+      showToast("📝 Minute added");
+    },
+    [showToast],
+  );
 
-  // ─── AI Interaction ───
-  const sendToAi = async (prompt: string, isActionButton = false) => {
-    if (!prompt.trim() && !isActionButton) return;
-
-    // Add user message to chat
-    const userMsg: ChatMessage = {
-      id: generateId(),
-      role: "user",
-      text: prompt.trim(),
-      timestamp: getTimestamp(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setIsAiLoading(true);
-    setActiveTab("chat");
-
-    try {
-      const response = await sendChatMessage(prompt, messages, minutes);
-      const aiMsg: ChatMessage = {
-        id: generateId(),
-        role: "ai",
-        text: response,
-        timestamp: getTimestamp(),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-    } catch {
-      const errorMsg: ChatMessage = {
-        id: generateId(),
-        role: "ai",
-        text: "⚠️ Something went wrong. Please try again.",
-        timestamp: getTimestamp(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  const handleActionButton = async (
-    action: "assist" | "suggest" | "followup" | "recap",
-    label: string
-  ) => {
-    setIsAiLoading(true);
-    setActiveTab("chat");
-
-    // Show what the user clicked
-    const userMsg: ChatMessage = {
-      id: generateId(),
-      role: "user",
-      text: `✨ ${label}`,
-      timestamp: getTimestamp(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-
-    try {
-      let response: string;
-      switch (action) {
-        case "assist":
-          response = await getAssist(messages, minutes);
-          break;
-        case "suggest":
-          response = await getSuggestion(messages, minutes);
-          break;
-        case "followup":
-          response = await getFollowUps(messages, minutes);
-          break;
-        case "recap":
-          response = await getRecap(messages, minutes);
-          break;
-      }
-      const aiMsg: ChatMessage = {
-        id: generateId(),
-        role: "ai",
-        text: response,
-        timestamp: getTimestamp(),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-    } catch {
-      const errorMsg: ChatMessage = {
-        id: generateId(),
-        role: "ai",
-        text: "⚠️ Could not get a response. Please try again.",
-        timestamp: getTimestamp(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    } finally {
-      setIsAiLoading(false);
-    }
-  };
-
-  // ─── Send Handler ───
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-    if (activeTab === "transcript") {
-      addMinute(inputText);
-    } else {
-      sendToAi(inputText);
-    }
-    setInputText("");
-    inputRef.current?.focus();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  // ─── Delete Minute ───
-  const deleteMinute = (id: string) => {
+  const deleteMinute = useCallback((id: string) => {
     setMinutes((prev) => prev.filter((m) => m.id !== id));
-    showToast("🗑️ Minute removed");
-  };
+  }, []);
+
+  const clearTranscript = useCallback(() => {
+    setTranscriptSegments([]);
+    showToast("🗑️ Transcript cleared");
+  }, [showToast]);
+
+  // ─── PDF Export ───
+  const handleDownloadPDF = useCallback(async () => {
+    if (isPdfExporting) return;
+    const hasContent =
+      minutes.length > 0 ||
+      messages.filter((m) => m.role !== "system").length > 0;
+    if (!hasContent) {
+      showToast("📄 No meeting content to export yet");
+      return;
+    }
+    setIsPdfExporting(true);
+    showToast("📄 Generating PDF...");
+    try {
+      await downloadMeetingPDF(messages, minutes);
+      showToast("✅ PDF downloaded!");
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      showToast("❌ PDF export failed — check console");
+    } finally {
+      setIsPdfExporting(false);
+    }
+  }, [isPdfExporting, minutes, messages, showToast]);
+
+  // ─── AI Interaction — FIX: use messagesRef for fresh state ───
+  const sendToAi = useCallback(
+    async (prompt: string) => {
+      if (!prompt.trim()) return;
+
+      const userMsg: ChatMessage = {
+        id: generateId(),
+        role: "user",
+        text: prompt.trim(),
+        timestamp: getTimestamp(),
+      };
+
+      // Add user message to both state and ref
+      const updatedMessages = [...messagesRef.current, userMsg];
+      messagesRef.current = updatedMessages;
+      setMessages(updatedMessages);
+
+      setIsAiLoading(true);
+      setActiveTab("chat");
+
+      try {
+        // Pass the FRESH messages (from ref, not stale closure)
+        const response = await sendChatMessage(
+          prompt,
+          updatedMessages,
+          minutes,
+        );
+        const aiMsg: ChatMessage = {
+          id: generateId(),
+          role: "ai",
+          text: response,
+          timestamp: getTimestamp(),
+        };
+        messagesRef.current = [...messagesRef.current, aiMsg];
+        setMessages((prev) => [...prev, aiMsg]);
+      } catch {
+        const errorMsg: ChatMessage = {
+          id: generateId(),
+          role: "ai",
+          text: "⚠️ Something went wrong. Please try again.",
+          timestamp: getTimestamp(),
+        };
+        messagesRef.current = [...messagesRef.current, errorMsg];
+        setMessages((prev) => [...prev, errorMsg]);
+      } finally {
+        setIsAiLoading(false);
+      }
+    },
+    [minutes],
+  );
+
+  const handleActionButton = useCallback(
+    async (
+      action: "assist" | "suggest" | "followup" | "recap",
+      label: string,
+    ) => {
+      const userMsg: ChatMessage = {
+        id: generateId(),
+        role: "user",
+        text: `✨ ${label}`,
+        timestamp: getTimestamp(),
+      };
+
+      const updatedMessages = [...messagesRef.current, userMsg];
+      messagesRef.current = updatedMessages;
+      setMessages(updatedMessages);
+      setIsAiLoading(true);
+      setActiveTab("chat");
+
+      try {
+        let response: string;
+        if (action === "assist")
+          response = await getAssist(updatedMessages, minutes);
+        else if (action === "suggest")
+          response = await getSuggestion(updatedMessages, minutes);
+        else if (action === "followup")
+          response = await getFollowUps(updatedMessages, minutes);
+        else response = await getRecap(updatedMessages, minutes);
+
+        const aiMsg: ChatMessage = {
+          id: generateId(),
+          role: "ai",
+          text: response,
+          timestamp: getTimestamp(),
+        };
+        messagesRef.current = [...messagesRef.current, aiMsg];
+        setMessages((prev) => [...prev, aiMsg]);
+      } catch {
+        const errorMsg: ChatMessage = {
+          id: generateId(),
+          role: "ai",
+          text: "⚠️ Could not get a response. Please try again.",
+          timestamp: getTimestamp(),
+        };
+        messagesRef.current = [...messagesRef.current, errorMsg];
+        setMessages((prev) => [...prev, errorMsg]);
+      } finally {
+        setIsAiLoading(false);
+      }
+    },
+    [minutes],
+  );
+
+  // ─── Input Handler — FIX: cleaner, more robust ───
+  const handleSend = useCallback(() => {
+    const text = inputText.trim();
+    if (!text) return;
+    setInputText("");
+    if (activeTab === "transcript") {
+      addMinute(text);
+    } else {
+      sendToAi(text);
+    }
+    // Refocus input after send
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, [inputText, activeTab, addMinute, sendToAi]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+      // Let all other keys through naturally
+    },
+    [handleSend],
+  );
+
+  // ─── Derived state ───
+  const isRecording = audioStatus === "listening" || audioStatus === "paused";
+  const isPaused = audioStatus === "paused";
+  const isListening = audioStatus === "listening";
+  const liveSegments = transcriptSegments.filter((s) => !s.isFinal);
+  const hasMeetingContent =
+    minutes.length > 0 ||
+    messages.filter((m) => m.role !== "system").length > 0;
 
   return (
-    <div className="app-wrapper" ref={appRef}>
+    <div className="app-wrapper">
       {/* TOAST */}
       {toast && <div className="toast">{toast}</div>}
 
       {/* TOP PILL BAR */}
-      <div className="top-bar-container">
-        <div className="control-pill">
+      <div data-tauri-drag-region className="top-bar-container">
+        <div className="control-pill" data-tauri-drag-region>
           <button
-            className="icon-btn tooltip-anchor"
+            className="icon-btn"
             onClick={handleToggleStealth}
             title={isStealthMode ? "Disable stealth" : "Enable stealth mode"}
           >
             {isStealthMode ? <EyeOff /> : <Eye />}
           </button>
+
           <div className="playback-controls">
-            <button
-              className={`icon-btn ${isPaused ? "paused-btn" : ""}`}
-              onClick={handleTogglePause}
-              title={isPaused ? "Resume" : "Pause"}
-              disabled={!isRecording}
-            >
-              {isPaused ? <Play /> : <Pause />}
-            </button>
-            <div className="divider-sm"></div>
-            <button
-              className={`icon-btn ${!isRecording ? "stopped-btn" : ""}`}
-              onClick={handleStop}
-              title={isRecording ? "Stop recording" : "Start recording"}
-            >
-              <Square />
-            </button>
+            {!isRecording && (
+              <button
+                className="icon-btn mic-start-btn"
+                onClick={handleStartRecording}
+                title={
+                  isSupported
+                    ? "Start recording"
+                    : "Speech recognition not supported"
+                }
+                disabled={!isSupported || audioStatus === "requesting"}
+              >
+                <Mic />
+              </button>
+            )}
+
+            {isRecording && (
+              <button
+                className={`icon-btn ${isPaused ? "paused-btn" : ""}`}
+                onClick={handleTogglePause}
+                title={isPaused ? "Resume" : "Pause"}
+              >
+                {isPaused ? <Play /> : <Pause />}
+              </button>
+            )}
+
+            {isRecording && <div className="divider-sm" />}
+
+            {isRecording && (
+              <button
+                className="icon-btn"
+                onClick={handleStop}
+                title="Stop recording"
+              >
+                <Square />
+              </button>
+            )}
           </div>
-          {isRecording && (
-            <div className={`rec-indicator ${isPaused ? "paused" : ""}`}>
-              <span className="rec-dot"></span>
-              <span className="rec-text">{isPaused ? "PAUSED" : "REC"}</span>
+
+          {/* Recording indicator */}
+          {isListening && (
+            <div className="rec-indicator">
+              <span className="rec-dot" />
+              <span className="rec-text">LIVE</span>
             </div>
           )}
-          <button className="icon-btn" onClick={handleCollapse} title={isCollapsed ? "Expand" : "Collapse"}>
+          {isPaused && (
+            <div className="rec-indicator paused">
+              <span className="rec-dot" />
+              <span className="rec-text">PAUSED</span>
+            </div>
+          )}
+          {audioStatus === "requesting" && (
+            <div className="rec-indicator">
+              <span className="rec-text">MIC...</span>
+            </div>
+          )}
+
+          {/* PDF Export */}
+          <button
+            className={`icon-btn pdf-export-btn ${!hasMeetingContent ? "pdf-export-btn--disabled" : ""} ${isPdfExporting ? "pdf-export-btn--loading" : ""}`}
+            onClick={handleDownloadPDF}
+            title={
+              hasMeetingContent
+                ? "Download meeting PDF"
+                : "No meeting content yet"
+            }
+            disabled={isPdfExporting}
+          >
+            {isPdfExporting ? (
+              <span className="pdf-spinner" />
+            ) : (
+              <DownloadPdf />
+            )}
+          </button>
+
+          <button
+            className="icon-btn"
+            onClick={handleCollapse}
+            title={isCollapsed ? "Expand" : "Collapse"}
+          >
             {isCollapsed ? <ChevronDown /> : <ChevronUp />}
           </button>
-          <div className="vertical-divider"></div>
+          <div className="vertical-divider" />
           <button
             className="icon-btn drag-btn"
-            onMouseDown={handleDragStart}
+            data-tauri-drag-region
             title="Drag to move"
           >
             <GripVertical />
@@ -397,9 +744,21 @@ function App() {
       </div>
 
       {/* MAIN PANEL */}
-      <div className={`main-panel ${isCollapsed ? "collapsed" : ""}`}>
+      <div
+        ref={panelRef}
+        className={`main-panel ${isCollapsed ? "collapsed" : ""}`}
+        style={
+          panelHeight && !isCollapsed
+            ? { height: `${panelHeight}px` }
+            : undefined
+        }
+      >
         <div className="panel-header">
-          <button className="icon-btn home-btn" onClick={handleHome} title="Home">
+          <button
+            className="icon-btn home-btn"
+            onClick={handleHome}
+            title="Home"
+          >
             <Home />
           </button>
           <div className="tabs">
@@ -414,26 +773,67 @@ function App() {
               onClick={() => setActiveTab("transcript")}
             >
               Transcript
+              {minutes.length > 0 && (
+                <span className="tab-badge">{minutes.length}</span>
+              )}
             </button>
           </div>
+          {activeTab === "transcript" &&
+            (transcriptSegments.length > 0 || minutes.length > 0) && (
+              <button
+                className="icon-btn"
+                onClick={clearTranscript}
+                title="Clear live transcript"
+                style={{ marginLeft: "auto", opacity: 0.6 }}
+              >
+                <Trash />
+              </button>
+            )}
         </div>
 
         {/* ACTION BUTTONS */}
         <div className="actions-row">
-          <button className="action-btn" onClick={() => handleActionButton("assist", "Assist")} disabled={isAiLoading}>
+          <button
+            className="action-btn"
+            onClick={() => handleActionButton("assist", "Assist")}
+            disabled={isAiLoading}
+          >
             ✨ Assist
           </button>
           <span className="dot">•</span>
-          <button className="action-btn" onClick={() => handleActionButton("suggest", "What should I say?")} disabled={isAiLoading}>
-            🪄 What should I say?
+          <button
+            className="action-btn"
+            onClick={() => handleActionButton("suggest", "What should I say?")}
+            disabled={isAiLoading}
+          >
+            🪄 Suggest
           </button>
           <span className="dot">•</span>
-          <button className="action-btn" onClick={() => handleActionButton("followup", "Follow-up questions")} disabled={isAiLoading}>
-            💬 Follow-up questions
+          <button
+            className="action-btn"
+            onClick={() =>
+              handleActionButton("followup", "Follow-up questions")
+            }
+            disabled={isAiLoading}
+          >
+            💬 Follow-ups
           </button>
           <span className="dot">•</span>
-          <button className="action-btn" onClick={() => handleActionButton("recap", "Recap")} disabled={isAiLoading}>
+          <button
+            className="action-btn"
+            onClick={() => handleActionButton("recap", "Recap")}
+            disabled={isAiLoading}
+          >
             ↻ Recap
+          </button>
+          <span className="dot">•</span>
+          <button
+            className={`action-btn pdf-action-btn ${isPdfExporting ? "pdf-action-btn--loading" : ""}`}
+            onClick={handleDownloadPDF}
+            disabled={isPdfExporting || !hasMeetingContent}
+            title="Download meeting report as PDF"
+          >
+            {isPdfExporting ? "⏳ Exporting…" : "📄 Export PDF"}
           </button>
         </div>
 
@@ -453,7 +853,9 @@ function App() {
                 <div className="message message-ai">
                   <div className="message-bubble">
                     <div className="typing-indicator">
-                      <span></span><span></span><span></span>
+                      <span />
+                      <span />
+                      <span />
                     </div>
                   </div>
                 </div>
@@ -462,10 +864,23 @@ function App() {
             </div>
           ) : (
             <div className="transcript-list">
-              {minutes.length === 0 ? (
+              {liveSegments.length > 0 && (
+                <div className="live-transcript-banner">
+                  <span className="live-dot" />
+                  <span className="live-text">
+                    {liveSegments[liveSegments.length - 1].text}
+                  </span>
+                </div>
+              )}
+
+              {minutes.length === 0 && liveSegments.length === 0 ? (
                 <div className="empty-state">
-                  <span className="empty-icon">📝</span>
-                  <p>No minutes yet. Type below and press Enter to add meeting minutes.</p>
+                  <span className="empty-icon">🎤</span>
+                  <p>
+                    {isSupported
+                      ? "Press the mic button to start recording. Speech and system audio will appear here."
+                      : "Speech recognition not supported. Type minutes manually below."}
+                  </p>
                 </div>
               ) : (
                 minutes.map((minute) => (
@@ -489,20 +904,17 @@ function App() {
           )}
         </div>
 
-        {/* INPUT */}
+        {/* INPUT — FIX: simplified, no overlay tricks */}
         <div className="input-container">
           <div className="input-wrapper">
             {!inputText && (
               <div className="input-placeholder">
                 {activeTab === "transcript" ? (
                   <>
-                    <Plus /> Add a meeting minute...
+                    <Plus /> Add a minute manually...
                   </>
                 ) : (
-                  <>
-                    Ask about your screen or conversation, or <kbd>^</kbd>{" "}
-                    <kbd>↵</kbd> for Assist
-                  </>
+                  <>Ask anything about the meeting...</>
                 )}
               </div>
             )}
@@ -512,11 +924,26 @@ function App() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
+              autoComplete="off"
+              spellCheck={false}
             />
           </div>
-          <button className="send-btn" onClick={handleSend} disabled={!inputText.trim() || isAiLoading}>
+          <button
+            className="send-btn"
+            onClick={handleSend}
+            disabled={!inputText.trim() || isAiLoading}
+          >
             <Send />
           </button>
+        </div>
+
+        {/* RESIZE HANDLE */}
+        <div
+          className="resize-handle"
+          onMouseDown={handleResizeStart}
+          title="Drag to resize"
+        >
+          <div className="resize-bar" />
         </div>
       </div>
     </div>
